@@ -1,0 +1,54 @@
+# ──────────────────────────────────────────
+#  .gitignore para gac-sistema
+#  Archivos que Git debe ignorar siempre
+# ──────────────────────────────────────────
+
+
+# ── ENTORNO VIRTUAL DE PYTHON ─────────────
+# Cada quien instala el suyo con: pip install -r requirements.txt
+venv/
+
+
+# ── BASE DE DATOS ─────────────────────────
+# Datos reales de la clínica → no van a GitHub
+# Tu compañero crea la suya corriendo: python crear_tablas.py
+*.db
+*.sqlite
+*.sqlite3
+
+
+# ── ARCHIVOS TEMPORALES DE PYTHON ─────────
+# Python los genera solo al ejecutar el código, no son parte del proyecto
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+
+# ── IMÁGENES DEL INVENTARIO ───────────────
+# Son archivos pesados que no son código
+# Guárdalas aparte o usa un servicio de imágenes
+imagenes act/
+
+
+# ── ARCHIVOS DE SISTEMA ───────────────────
+# Windows
+Thumbs.db
+desktop.ini
+
+# macOS (por si tu compañero usa Mac)
+.DS_Store
+
+
+# ── VARIABLES DE ENTORNO (SEGURIDAD) ──────
+# Si algún día guardas contraseñas o claves de API en un archivo .env,
+# este archivo NUNCA debe subirse a GitHub
+.env
+.env.local
+
+
+# ── ARCHIVOS DEL EDITOR ───────────────────
+# Configuraciones personales de VS Code (opcionales, algunos prefieren compartirlas)
+.vscode/settings.json
+.vscode/launch.json
+

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAC — Centro de Control</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>GAC</h1>
+            <p>Clínica San Rafael — Gestión de Activos Celar</p>
+        </header>
+
+        <div class="tab-navigation">
+            <button class="tab-btn active" onclick="switchTab('modulo-consulta')"> Consultar</button>
+            <button class="tab-btn" onclick="switchTab('modulo-traslado')"> Traslados</button>
+            <button class="tab-btn" onclick="switchTab('modulo-registro')"> Registrar (Admin)</button>
+        </div>
+
+        <div id="modulo-consulta" class="tab-content active-content">
+            <div class="card max-width-card">
+                <h3 class="section-title">Módulo de Escaneo</h3>
+                <div class="input-group">
+                    <label for="codigoInput">Placa del Activo</label>
+                    <input type="text" id="codigoInput" class="search-input" placeholder="Ej. 1532-CR-000001" autofocus autocomplete="off">
+                </div>
+                <button class="btn-primary" id="btnBuscar">Consultar Activo</button>
+                <div class="error-message" id="errorTxt">No se encontró ningún activo con ese código.</div>
+            </div>
+
+            <div class="result-card max-width-card" id="resultCard">
+                <div class="result-header">
+                    <h2 id="resNombre">Monitor Clínico</h2>
+                    <div class="status-badge" id="resEstado">Operativo</div>
+                </div>
+                <div class="grid-info">
+                    <div class="info-item">
+                        <span class="label">Marca</span>
+                        <span class="value" id="resMarca">—</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Modelo</span>
+                        <span class="value" id="resModelo">—</span>
+                    </div>
+                    <div class="info-item" style="grid-column: span 2;">
+                        <span class="label">Ubicación Actual</span>
+                        <span class="value" id="resUbicacion" style="color: #0071e3;">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="modulo-traslado" class="tab-content">
+            <div class="card max-width-card">
+                <h3 class="section-title">Registrar Traslado / Movimiento</h3>
+                <form id="formMovimiento" onsubmit="event.preventDefault();">
+                    <div class="input-group">
+                        <label>Escanear Placa del Activo *</label>
+                        <input type="text" id="movCodigo" class="search-input" placeholder="Ej. 1532-CR-000001" autocomplete="off">
+                    </div>
+                    <div class="input-group">
+                        <label>Nueva Ubicación Destino *</label>
+                        <input type="text" id="movUbicacion" class="search-input" placeholder="Ej. UCI - PISO 2">
+                    </div>
+                    <div class="input-group">
+                        <label>ID Jefe de Zona Responsable *</label>
+                        <input type="number" id="movUsuario" class="search-input" placeholder="Ej. 102">
+                    </div>
+                    <button type="button" class="btn-primary btn-warning" id="btnTrasladar">Confirmar Traslado</button>
+                </form>
+                <div id="modulo-lado" class="tab-content">
+            <div class="card max-width-card">
+                <h3 class="section-title">Registrar Traslado / Movimiento</h3>
+                <form id="formMovimiento" onsubmit="event.preventDefault();">
+                    <div class="input-group">
+                        <label>Escanear Código del Equipo *</label>
+                        <input type="text" id="movCodigo" class="search-input" placeholder="Ej. ZEB-001" autocomplete="off">
+                    </div>
+                    <div class="input-group">
+                        <label>Nueva Ubicación Destino *</label>
+                        <input type="text" id="movUbicacion" class="search-input" placeholder="Ej. Hospitalización - Cama 204">
+                    </div>
+                    <div class="input-group">
+                        <label>ID Funcionario Responsable *</label>
+                        <input type="number" id="movUsuario" class="search-input" placeholder="Ej. 102">
+                    </div>
+                    <button type="button" class="btn-primary btn-warning" id="btnTrasladar">Confirmar Traslado</button>
+                </form>
+                <div class="success-toast" id="movSuccessTxt">¡Traslado registrado con éxito! Ubicación actualizada.</div>
+                <div class="error-message" id="movErrorTxt">Error: El código de barras no existe.</div>
+            </div>
+
+            <div class="card max-width-card" style="margin-top: 20px;">
+                <h3 class="section-title">Historial Reciente de Traslados</h3>
+                <div class="table-container">
+                    <table class="apple-table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Ubicación Destino</th>
+                                <th>Fecha y Hora</th>
+                                <th>Responsable</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaHistorialBody">
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: #86868b; padding: 20px;">Cargando historial...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+                <div class="success-toast" id="movSuccessTxt">¡Traslado registrado con éxito! Ubicación actualizada.</div>
+                <div class="error-message" id="movErrorTxt">Error: El código de barras no existe.</div>
+            </div>
+        </div>
+
+        <div id="modulo-registro" class="tab-content">
+            <div class="card max-width-card">
+                <h3 class="section-title">Registrar Nuevo Activo (Acceso Administrador)</h3>
+                <form id="formRegistro" onsubmit="event.preventDefault();">
+                    <div class="input-group">
+                        <label>Placa del Activo *</label>
+                        <input type="text" id="regCodigo" class="search-input" placeholder="Ej. 1532-CR-000001" autocomplete="off" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Nombre del Equipo *</label>
+                        <input type="text" id="regNombre" class="search-input" placeholder="Ej. BOMBA DE INFUSION" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Marca *</label>
+                        <input type="text" id="regMarca" class="search-input" placeholder="Ej. MINDRAY" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Modelo *</label>
+                        <input type="text" id="regModelo" class="search-input" placeholder="Ej. SK-500I" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Ubicación Inicial *</label>
+                        <input type="text" id="regUbicacion" class="search-input" placeholder="Ej. URGENCIAS " required>
+                    </div>
+                    <button type="button" class="btn-primary btn-success" id="btnRegistrar">Guardar en Sistema</button>
+                </form>
+                <div class="success-toast" id="regSuccessTxt">¡Equipo registrado con éxito en la base de datos!</div>
+                <div class="error-message" id="regErrorTxt">Error: La placa del activo ya existe.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

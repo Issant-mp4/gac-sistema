@@ -1,0 +1,248 @@
+/* --- ESTILOS COMPONENTES MODULARES (ESTILO APPLE) --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    background-color: #f5f5f7;
+    color: #1d1d1f;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.container {
+    max-width: 620px; /* Diseño enfocado y centrado en un módulo a la vez */
+    width: 100%;
+    margin-top: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+header h1 {
+    font-size: 42px;
+    font-weight: 600;
+    letter-spacing: -1px;
+    margin-bottom: 6px;
+}
+
+header p {
+    color: #86868b;
+    font-size: 16px;
+}
+
+/* INTERFAZ DE PESTAÑAS (TABS) AL ESTILO IPHONE */
+.tab-navigation {
+    display: flex;
+    background-color: rgba(118, 118, 128, 0.12); /* Gris de fondo de controles iOS */
+    padding: 4px;
+    border-radius: 14px;
+    margin-bottom: 30px;
+    gap: 4px;
+}
+
+.tab-btn {
+    flex: 1;
+    border: none;
+    background: none;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1d1d1f;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+    background: #ffffff;
+    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.12), 0px 3px 1px rgba(0, 0, 0, 0.04);
+    font-weight: 600;
+}
+
+/* CONTROL DE VISIBILIDAD DE MÓDULOS */
+.tab-content {
+    display: none; /* Oculto por defecto */
+}
+
+.tab-content.active-content {
+    display: block; /* Solo se muestra el activo */
+    animation: slideUp 0.35s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 22px;
+    color: #1d1d1f;
+    letter-spacing: -0.2px;
+}
+
+.card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 30px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.01);
+    margin-bottom: 20px;
+}
+
+.max-width-card {
+    width: 100%;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 18px;
+}
+
+.input-group label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #86868b;
+}
+
+.search-input {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 15px;
+    border-radius: 10px;
+    border: 1px solid #d2d2d7;
+    background-color: #fff;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.search-input:focus {
+    border-color: #0071e3;
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+}
+
+/* BOTONES */
+.btn-primary {
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #fff;
+    background-color: #0071e3;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: #0077ed;
+}
+
+.btn-success { background-color: #34c759; }
+.btn-success:hover { background-color: #30b64f; }
+
+.btn-warning { background-color: #ff9500; }
+.btn-warning:hover { background-color: #e68600; }
+
+/* RECUADRO DE RESULTADOS */
+.result-card {
+    display: none;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 30px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.02);
+}
+
+.result-header {
+    border-bottom: 1px solid #f5f5f7;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.result-header h2 { font-size: 20px; font-weight: 600; }
+
+.status-badge {
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 12px;
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.grid-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.info-item { display: flex; flex-direction: column; }
+.info-item .label { font-size: 12px; color: #86868b; }
+.info-item .value { font-size: 15px; font-weight: 500; }
+
+.error-message, .success-toast {
+    display: none;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 14px;
+    font-weight: 500;
+}
+
+.error-message { color: #ff3b30; }
+.success-toast { color: #34c759; }
+
+/* --- ESTILOS DE TABLA MODERNA ESTILO APPLE --- */
+.table-container {
+    width: 100%;
+    overflow-x: auto; /* Por si la pantalla es pequeña, permite scroll horizontal */
+}
+
+.apple-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px;
+}
+
+.apple-table th {
+    font-weight: 600;
+    color: #86868b; /* Gris Apple */
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e5ea;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.apple-table td {
+    padding: 14px 16px;
+    color: #1d1d1f;
+    border-bottom: 1px solid #f5f5f7;
+}
+
+.apple-table tbody tr:last-child td {
+    border-bottom: none; /* Quita la última línea para que se vea más limpio */
+}
+
+.apple-table tbody tr:hover {
+    background-color: #fafafa; /* Efecto sutil al pasar el mouse */
+}
