@@ -1,203 +1,126 @@
 import os
 import sys
 
-# Este truco le asegura a Uvicorn y a Python que encuentren database.py y models.py
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from typing import Optional, List
-from datetime import datetime
+from typing import Optional
 
-# Importaciones locales conectadas a la base de datos real
 from database import get_db, engine
 import models
+import csv
+import io
+from sqlalchemy import text 
+
+# Crear las tablas nuevas automáticamente si no existen
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="API GAC - Clínica San Rafael")
 
-# --- CONFIGURACIÓN DE CORS (Permisos de conexión) ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],        # Permite que cualquier aplicación (frontend) se conecte
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],        # Permite usar todos los métodos (GET, POST, etc.)
-    allow_headers=["*"],        # Permite enviar cualquier tipo de cabecera de datos
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# --- Modelos de Pydantic ---
+# --- NUEVO MODELO QUE ACEPTA LOS 14 CAMPOS SIN ERROR 422 ---
+class ActivoInput(BaseModel):
+    codigo_activo: str
+    placa: str
+    nombre: str
+    serie: str
+    ubicacion_origen: str
+    ubicacion_destino: str
+    responsable_origen: str
+    responsable_destino: str
+    centro_costos_origen: int
+    centro_costos_destino: int
+    porcentaje: float
+    secuencia: str
+    enlace: str
+    archivo_plano: str
+
 class MovimientoInput(BaseModel):
     codigo_barras: str
     id_usuario: int
     nueva_ubicacion: str
     observaciones: Optional[str] = None
 
-class ActivoInput(BaseModel):
-    codigo_barras: str
-    nombre: str
-    marca: str
-    modelo: str
-    ubicacion_actual: str
-    estado: str = "Operativo"
-
-class ActivoInput(BaseModel):
-    codigo_barras: str
-    nombre: str
-    marca: str
-    modelo: str
-    ubicacion_actual: str
-    estado: str = "Operativo"
-
-
-
-
 
 @app.get("/")
 def ruta_principal():
-    return {"mensaje": "¡El backend del GAC está conectado a SQLite con éxito!"}
+    return {"mensaje": "¡Backend GAC 14 campos conectado con éxito!"}
 
-
-# 5. Endpoint para REGISTRAR un equipo médico completamente nuevo
+# REGISTRAR UN ACTIVO NUEVO EN LA BASE DE DATOS
 @app.post("/activos")
 def registrar_nuevo_activo(activo: ActivoInput, db: Session = Depends(get_db)):
-    # Primero verificamos que no exista ya un equipo con ese código
-    existe = db.query(models.ActivoDB).filter(models.ActivoDB.codigo_barras == activo.codigo_barras).first()
+    # Verificamos por la placa (codigo de barras)
+    existe = db.query(models.ActivoDB).filter(models.ActivoDB.codigo_barras == activo.placa).first()
     if existe:
-        raise HTTPException(status_code=400, detail="Error: Ya existe un equipo registrado con ese código de barras.")
+        raise HTTPException(status_code=400, detail="Error: Esta placa de activo ya existe en el sistema.")
     
-    # Preparamos el nuevo equipo para guardarlo
     nuevo_equipo = models.ActivoDB(
-        codigo_barras=activo.codigo_barras,
+        codigo_barras=activo.placa,
+        codigo_activo=activo.codigo_activo,
         nombre=activo.nombre,
-        marca=activo.marca,
-        modelo=activo.modelo,
-        ubicacion_actual=activo.ubicacion_actual,
-        estado=activo.estado
+        serie=activo.serie,
+        ubicacion_origen=activo.ubicacion_origen,
+        ubicacion_destino=activo.ubicacion_destino,
+        responsable_origen=activo.responsable_origen,
+        responsable_destino=activo.responsable_destino,
+        centro_costos_origen=activo.centro_costos_origen,
+        centro_costos_destino=activo.centro_costos_destino,
+        porcentaje=activo.porcentaje,
+        secuencia=activo.secuencia,
+        enlace=activo.enlace,
+        archivo_plano=activo.archivo_plano,
+        estado="Operativo"
     )
     
     db.add(nuevo_equipo)
     db.commit()
-    db.refresh(nuevo_equipo)
     
-    return {
-        "estado": "Éxito",
-        "mensaje": f"El equipo '{activo.nombre}' (Marca: {activo.marca}) fue registrado correctamente en el sistema."
-    }
+    return {"estado": "Éxito", "mensaje": "¡Activo registrado contablemente!"}
 
-
-
-
-
-# 1. Endpoint para CONSULTAR un activo directamente en la Base de Datos
+# CONSULTAR UN ACTIVO
 @app.get("/activos/{codigo_barras}")
 def consultar_activo(codigo_barras: str, db: Session = Depends(get_db)):
     activo = db.query(models.ActivoDB).filter(models.ActivoDB.codigo_barras == codigo_barras).first()
-    
     if not activo:
         raise HTTPException(status_code=404, detail="Activo no registrado en la clínica")
-    
     return activo
 
-
-# 2. Endpoint para REGISTRAR un traslado real en la Base de Datos
+# TRASLADOS
 @app.post("/movimientos")
 def registrar_movimiento(datos: MovimientoInput, db: Session = Depends(get_db)):
-    # 1. Verificar si el activo existe en la clínica usando el código de barras
     activo = db.query(models.ActivoDB).filter(models.ActivoDB.codigo_barras == datos.codigo_barras).first()
     if not activo:
-        raise HTTPException(status_code=404, detail="No se puede mover un activo que no existe en el sistema")
+        raise HTTPException(status_code=404, detail="No se puede mover un activo que no existe")
     
-    ubicacion_anterior = activo.ubicacion_actual
+    ubicacion_anterior = activo.ubicacion_destino # La ubicación actual es la de destino anterior
     
     try:
-        # 2. Actualizar la ubicación actual del activo en su propia tabla
-        activo.ubicacion_actual = datos.nueva_ubicacion
-        
-        # 3. Crear el registro del traslado en el historial (asegurando el id_usuario)
+        activo.ubicacion_destino = datos.nueva_ubicacion
         nuevo_traslado = models.MovimientoDB(
             codigo_barras=datos.codigo_barras,
-            id_usuario=int(datos.id_usuario),  # Forzamos que sea un entero para SQL
+            id_usuario=int(datos.id_usuario),
             ubicacion_anterior=ubicacion_anterior,
             nueva_ubicacion=datos.nueva_ubicacion,
             observaciones=datos.observaciones
         )
-        
-        # 4. Guardar los cambios permanentemente en el archivo .db
         db.add(nuevo_traslado)
         db.commit()
-        db.refresh(nuevo_traslado)
-        
-        return {
-            "estado": "Éxito",
-            "mensaje": f"Traslado guardado en SQL. El equipo '{activo.nombre}' pasó a '{datos.nueva_ubicacion}'."
-        }
-        
+        return {"estado": "Éxito", "mensaje": "Traslado guardado."}
     except Exception as e:
-        db.rollback()  # Deshace cualquier cambio a medias si hay error
-        raise HTTPException(status_code=400, detail=f"Error al registrar en la base de datos: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Error al registrar el traslado.")
 
-# 3. Endpoint para ver el HISTORIAL acumulado en la base de datos
 @app.get("/historial")
 def ver_historial(db: Session = Depends(get_db)):
     registros = db.query(models.MovimientoDB).all()
     return {"total_movimientos": len(registros), "registros": registros}
-
-
-# 5. Endpoint para REGISTRAR un equipo médico o de sistemas nuevo
-@app.post("/activos")
-def registrar_nuevo_activo(activo: ActivoInput, db: Session = Depends(get_db)):
-    # Primero verificamos que no exista ya un equipo con ese código
-    existe = db.query(models.ActivoDB).filter(models.ActivoDB.codigo_barras == activo.codigo_barras).first()
-    if existe:
-        raise HTTPException(status_code=400, detail="Error: Ya existe un equipo registrado con ese código de barras.")
-    
-    # Preparamos el nuevo equipo para guardarlo
-    nuevo_equipo = models.ActivoDB(
-        codigo_barras=activo.codigo_barras,
-        nombre=activo.nombre,
-        marca=activo.marca,
-        modelo=activo.modelo,
-        ubicacion_actual=activo.ubicacion_actual,
-        estado=activo.estado
-    )
-    
-    db.add(nuevo_equipo)
-    db.commit()
-    db.refresh(nuevo_equipo)
-    
-    return {
-        "estado": "Éxito",
-        "mensaje": f"El equipo '{activo.nombre}' (Marca: {activo.marca}) fue registrado correctamente en el sistema."
-    }
-
-
-# 4. ENDPOINT EXTRA: Herramienta para sembrar datos de prueba iniciales
-@app.post("/sistema/inicializar-datos")
-def inicializar_datos(db: Session = Depends(get_db)):
-    existe = db.query(models.ActivoDB).first()
-    if existe:
-        return {"mensaje": "La base de datos ya tiene equipos médicos de prueba cargados."}
-    
-    monitor = models.ActivoDB(
-        codigo_barras="123456789",
-        nombre="Monitor de Signos Vitales",
-        marca="Mindray",
-        modelo="UMEC12",
-        ubicacion_actual="Urgencias - Consultorio 1",
-        estado="Operativo"
-    )
-    bomba = models.ActivoDB(
-        codigo_barras="987654321",
-        nombre="Bomba de Infusión",
-        marca="B. Braun",
-        modelo="Infusomat",
-        ubicacion_actual="UCI - Cama 4",
-        estado="En mantenimiento"
-    )
-    
-    db.add(monitor)
-    db.add(bomba)
-    db.commit()
-    
-    return {"mensaje": "¡Datos de prueba (Monitor Mindray y Bomba B. Braun) creados con éxito en SQL!"}

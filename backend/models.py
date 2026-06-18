@@ -1,16 +1,25 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
 from sqlalchemy.sql import func
-from database import Base # Nota: Sin el punto para que el script suelto funcione directo
+from database import Base 
 
-# Tabla de Activos Fijos (Inventario de la clínica)
+# Tabla de Activos Fijos (Inventario de la clínica a 14 campos)
 class ActivoDB(Base):
     __tablename__ = "activos"
 
-    codigo_barras = Column(String, primary_key=True, index=True)
+    codigo_barras = Column(String, primary_key=True, index=True) # Usaremos la Placa como código de barras
+    codigo_activo = Column(String, nullable=True)
     nombre = Column(String, nullable=False)
-    marca = Column(String, nullable=False)
-    modelo = Column(String, nullable=False)
-    ubicacion_actual = Column(String, nullable=False)
+    serie = Column(String, nullable=True)
+    ubicacion_origen = Column(String, nullable=True)
+    ubicacion_destino = Column(String, nullable=True)
+    responsable_origen = Column(String, nullable=True)
+    responsable_destino = Column(String, nullable=True)
+    centro_costos_origen = Column(Integer, nullable=True)
+    centro_costos_destino = Column(Integer, nullable=True)
+    porcentaje = Column(Float, default=100.0)
+    secuencia = Column(String, nullable=True)
+    enlace = Column(String, nullable=True)
+    archivo_plano = Column(String, nullable=True)
     estado = Column(String, default="Operativo")
 
 # Tabla de Historial de Movimientos (Traslados)

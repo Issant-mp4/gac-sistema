@@ -4,19 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GAC — Centro de Control</title>
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
     <div class="container">
         <header>
             <h1>GAC</h1>
-            <p>Clínica San Rafael — Gestión de Activos FIjos</p>
+            <p>Clínica San Rafael — Gestión de Activos Fijos</p>
         </header>
 
         <div class="tab-navigation">
@@ -37,25 +34,27 @@
             </div>
 
             <div class="result-card max-width-card" id="resultCard">
-                <div class="result-header">
-                    <h2 id="resNombre">Monitor Clínico</h2>
-                    <div class="status-badge" id="resEstado">Operativo</div>
-                </div>
-                <div class="grid-info">
-                    <div class="info-item">
-                        <span class="label">Marca</span>
-                        <span class="value" id="resMarca">—</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="label">Modelo</span>
-                        <span class="value" id="resModelo">—</span>
-                    </div>
-                    <div class="info-item" style="grid-column: span 2;">
-                        <span class="label">Ubicación Actual</span>
-                        <span class="value" id="resUbicacion" style="color: #0071e3;">—</span>
-                    </div>
-                </div>
-            </div>
+    <div class="result-header">
+        <h2 id="resNombre">Nombre del Activo</h2>
+        <div class="status-badge" id="resEstado">Operativo</div>
+    </div>
+    <div class="grid-info">
+        <div class="info-item"><span class="label">Código Activo</span><span class="value" id="resCodActivo">—</span></div>
+        <div class="info-item"><span class="label">Placa/Serie</span><span class="value" id="resSerie">—</span></div>
+        <div class="info-item"><span class="label">Ubicación Origen</span><span class="value" id="resUbiOri">—</span></div>
+        <div class="info-item"><span class="label">Ubicación Destino</span><span class="value" id="resUbiDes">—</span></div>
+        <div class="info-item"><span class="label">Resp. Origen</span><span class="value" id="resRespOri">—</span></div>
+        <div class="info-item"><span class="label">Resp. Destino</span><span class="value" id="resRespDes">—</span></div>
+        <div class="info-item"><span class="label">C. Costos Ori</span><span class="value" id="resCCOri">—</span></div>
+        <div class="info-item"><span class="label">C. Costos Des</span><span class="value" id="resCCDes">—</span></div>
+        <div class="info-item"><span class="label">Porcentaje</span><span class="value" id="resPorcentaje">—</span></div>
+        <div class="info-item"><span class="label">Secuencia</span><span class="value" id="resSecuencia">—</span></div>
+    </div>
+    <div class="info-item" style="margin-top: 15px;">
+        <span class="label">Enlace Hoja de Vida</span>
+        <a href="#" id="resEnlace" target="_blank" style="color: #0071e3; font-weight: 500;">Ver enlace</a>
+    </div>
+</div>
         </div>
 
         <div id="modulo-traslado" class="tab-content">
@@ -80,7 +79,7 @@
                 <div class="error-message" id="movErrorTxt">Error: La placa del activo no existe.</div>
             </div>
 
-            <div class="card max-width-card" style="margin-top: 20px;">
+            <div class="card max-width-card spaced-card">
                 <h3 class="section-title">Historial Reciente de Traslados</h3>
                 <div class="table-container">
                     <table class="apple-table">
@@ -89,12 +88,12 @@
                                 <th>Código</th>
                                 <th>Ubicación Destino</th>
                                 <th>Fecha y Hora</th>
-                                <th style="text-align: center;">Responsable</th>
+                                <th class="text-center">Responsable</th>
                             </tr>
                         </thead>
                         <tbody id="tablaHistorialBody">
                             <tr>
-                                <td colspan="4" style="text-align: center; color: #86868b; padding: 20px;">Cargando historial...</td>
+                                <td colspan="4" class="empty-table-msg">Cargando historial...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -106,47 +105,102 @@
             <div class="card max-width-card">
                 <h3 class="section-title">Registrar Nuevo Activo (Acceso Administrador)</h3>
                 <form id="formRegistro" onsubmit="event.preventDefault();">
-                    <div class="input-group">
-                        <label>Placa del Activo *</label>
-                        <input type="text" id="regCodigo" class="search-input" placeholder="Ej. 1532-CR-000001" autocomplete="off" required>
+                    <div class="grid-formulario">
+                        
+                        <div class="form-section-divider">1. Identificación</div>
+                        <div class="form-group">
+                            <label>CÓDIGO DE ACTIVO *</label>
+                            <input type="text" id="regCodigoActivo" class="search-input" placeholder="Código interno" required autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label>PLACA (CÓDIGO DE BARRAS) *</label>
+                            <input type="text" id="regPlaca" class="search-input" placeholder="Ej. 1532-CR-000001" required autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label>NOMBRE DEL ACTIVO *</label>
+                            <input type="text" id="regNombre" class="search-input" placeholder="Ej. BOMBA DE INFUSIÓN" required>
+                        </div>
+                        <div class="form-group">
+                            <label>SERIE *</label>
+                            <input type="text" id="regSerie" class="search-input" placeholder="Número de serie" required>
+                        </div>
+
+                        <div class="form-section-divider">2. Trazabilidad Financiera y Física</div>
+                        <div class="form-group">
+                            <label>UBICACIÓN ORIGEN *</label>
+                            <input type="text" id="regUbiOrigen" class="search-input" placeholder="Ej. BODEGA PRINCIPAL" required>
+                        </div>
+                        <div class="form-group">
+                            <label>UBICACIÓN DESTINO *</label>
+                            <input type="text" id="regUbiDestino" class="search-input" placeholder="Ej. URGENCIAS" required>
+                        </div>
+                        <div class="form-group">
+                            <label>RESPONSABLE ORIGEN *</label>
+                            <input type="text" id="regRespOrigen" class="search-input" placeholder="ID o Nombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label>RESPONSABLE DESTINO *</label>
+                            <input type="text" id="regRespDestino" class="search-input" placeholder="ID o Nombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label>C. COSTOS ORIGEN *</label>
+                            <input type="number" id="regCCOrigen" class="search-input" placeholder="Ej. 1501" required>
+                        </div>
+                        <div class="form-group">
+                            <label>C. COSTOS DESTINO *</label>
+                            <input type="number" id="regCCDestino" class="search-input" placeholder="Ej. 1502" required>
+                        </div>
+
+                        <div class="form-section-divider">3. Control Adicional</div>
+                        <div class="form-group">
+                            <label>PORCENTAJE (%) *</label>
+                            <input type="number" id="regPorcentaje" class="search-input" value="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label>SECUENCIA</label>
+                            <input type="text" id="regSecuencia" class="search-input" placeholder="Orden/Lote">
+                        </div>
+                        <div class="form-group">
+                            <label>ENLACE</label>
+                            <input type="url" id="regEnlace" class="search-input" placeholder="URL hoja de vida">
+                        </div>
+                        <div class="form-group">
+                            <label>ARCHIVO PLANO</label>
+                            <input type="text" id="regArchivoPlano" class="search-input" placeholder="Nombre de archivo">
+                        </div>
                     </div>
-                    <div class="input-group">
-                        <label>Nombre del Equipo *</label>
-                        <input type="text" id="regNombre" class="search-input" placeholder="Ej. BOMBA DE INFUSION" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Marca *</label>
-                        <input type="text" id="regMarca" class="search-input" placeholder="Ej. MINDRAY" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Modelo *</label>
-                        <input type="text" id="regModelo" class="search-input" placeholder="Ej. SK-500I" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Ubicación Inicial *</label>
-                        <input type="text" id="regUbicacion" class="search-input" placeholder="Ej. URGENCIAS" required>
-                    </div>
-                    <button type="button" class="btn-primary btn-success" id="btnRegistrar">Guardar en Sistema</button>
+
+                    <button type="button" class="btn-primary btn-success spaced-btn" id="btnRegistrar">
+                        Guardar en Sistema GAC
+                    </button>
                 </form>
                 <div class="success-toast" id="regSuccessTxt">¡Equipo registrado con éxito en la base de datos!</div>
                 <div class="error-message" id="regErrorTxt">Error: La placa del activo ya existe.</div>
             </div>
-        </div>
 
+            <div class="card max-width-card spaced-card">
+                <h3 class="section-title">Sincronización Masiva de Inventario</h3>
+                <p class="section-description">Sube el archivo plano (.csv) de la clínica para cargar o actualizar los activos automáticamente.</p>
+                <div class="input-group">
+                    <label for="csvFile">Seleccionar Archivo Plano (.CSV)</label>
+                    <input type="file" id="csvFile" accept=".csv" class="search-input file-input">
+                </div>
+                <button id="btnImportarCsv" class="btn-primary btn-gradient-success">Procesar y Sincronizar Archivo</button>
+                <div class="success-toast spaced-toast" id="csvSuccessTxt"></div>
+                <div class="error-message spaced-toast" id="csvErrorTxt"></div>
+            </div>
+        </div>
     </div>
 
-<div id="adminModal" class="modal-overlay">
+    <div id="adminModal" class="modal-overlay">
         <div class="modal-card">
-            <h3 class="section-title" style="margin-bottom: 10px;">Acceso Restringido</h3>
-            <p style="color: #86868b; font-size: 14px; margin-bottom: 20px;">Ingrese el PIN de administrador de Activos Fijos para desbloquear este módulo.</p>
-            
+            <h3 class="section-title modal-title">Acceso Restringido</h3>
+            <p class="modal-subtitle">Ingrese el PIN de administrador de Activos Fijos para desbloquear este módulo.</p>
             <div class="input-group">
-                <input type="password" id="adminPinInput" class="search-input" placeholder="••••" style="text-align: center; font-size: 24px; letter-spacing: 4px;" autocomplete="off">
+                <input type="password" id="adminPinInput" class="search-input pin-input" placeholder="••••" autocomplete="off">
             </div>
-            
-            <div class="error-message" id="pinErrorTxt" style="margin-bottom: 15px;">PIN incorrecto. Intente nuevamente.</div>
-            
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <div class="error-message spaced-toast" id="pinErrorTxt">PIN incorrecto. Intente nuevamente.</div>
+            <div class="modal-actions">
                 <button class="btn-cancel" onclick="cerrarModalSeguridad()">Cancelar</button>
                 <button class="btn-primary" onclick="verificarAccesoAdmin()">Desbloquear</button>
             </div>

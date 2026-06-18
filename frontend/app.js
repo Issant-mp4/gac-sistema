@@ -1,35 +1,44 @@
-// --- ELEMENTOS DE MÓDULO DE CONSULTA ---
+// --- ELEMENTOS DE LA INTERFAZ ---
 const codigoInput = document.getElementById('codigoInput');
 const btnBuscar = document.getElementById('btnBuscar');
 const resultCard = document.getElementById('resultCard');
 const errorTxt = document.getElementById('errorTxt');
 
-// --- ELEMENTOS DE MÓDULO DE REGISTRO ---
 const btnRegistrar = document.getElementById('btnRegistrar');
 const regSuccessTxt = document.getElementById('regSuccessTxt');
 const regErrorTxt = document.getElementById('regErrorTxt');
 
-// --- ELEMENTOS DE MÓDULO DE TRASLADOS ---
 const btnTrasladar = document.getElementById('btnTrasladar');
 const movSuccessTxt = document.getElementById('movSuccessTxt');
 const movErrorTxt = document.getElementById('movErrorTxt');
 
+// --- EVENTOS DE INICIO ---
+document.addEventListener('DOMContentLoaded', () => {
+    btnBuscar.addEventListener('click', buscarActivo);
+    btnRegistrar.addEventListener('click', registrarActivo);
+    btnTrasladar.addEventListener('click', registrarTraslado);
+
+    codigoInput.addEventListener('keydown', (e) => { 
+        if (e.key === 'Enter') {
+            e.preventDefault(); 
+            buscarActivo(); 
+        }
+    });
+
+    cargarHistorialTraslados();
+});
+
 // ==========================================
-// CONTROLADOR DE PESTAÑAS (MODULAR UX)
+// CONTROLADOR DE PESTAÑAS Y SEGURIDAD
 // ==========================================
-// ==========================================
-// CONTROLADOR DE PESTAÑAS Y SEGURIDAD (UX)
-// ==========================================
-let adminDesbloqueado = false; // Variable que recuerda si ya ingresamos la clave
+let adminDesbloqueado = false; 
 
 function switchTab(tabId) {
-    // INTERCEPTOR DE SEGURIDAD: Si intentan entrar a registro y no están desbloqueados
     if (tabId === 'modulo-registro' && !adminDesbloqueado) {
         abrirModalSeguridad();
-        return; // Detenemos el cambio de pestaña
+        return; 
     }
 
-    // Código original de cambio de pestaña
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active-content'));
     
@@ -50,7 +59,6 @@ function switchTab(tabId) {
     }
 }
 
-// --- FUNCIONES DEL MODAL DE SEGURIDAD ---
 const modalAdmin = document.getElementById('adminModal');
 const pinInput = document.getElementById('adminPinInput');
 const pinError = document.getElementById('pinErrorTxt');
@@ -59,47 +67,37 @@ function abrirModalSeguridad() {
     modalAdmin.classList.add('active-modal');
     pinInput.value = '';
     pinError.style.display = 'none';
-    setTimeout(() => pinInput.focus(), 100); // Autoselecciona el campo para teclear rápido
+    setTimeout(() => pinInput.focus(), 100); 
 }
 
 function cerrarModalSeguridad() {
     modalAdmin.classList.remove('active-modal');
-    // Si cancela, nos aseguramos de que visualmente el botón "Consultar" vuelva a estar marcado
     document.querySelector("button[onclick=\"switchTab('modulo-consulta')\"]").click();
 }
 
 function verificarAccesoAdmin() {
     const pinIngresado = pinInput.value.trim();
-    // Aquí defines tu clave de administrador (ejemplo: 2026)
-    const PIN_CORRECTO = "2026"; 
-
-    if (pinIngresado === PIN_CORRECTO) {
-        // Clave correcta: Desbloqueamos, cerramos modal y permitimos el paso
+    if (pinIngresado === "2026") {
         adminDesbloqueado = true;
         modalAdmin.classList.remove('active-modal');
         switchTab('modulo-registro');
     } else {
-        // Clave incorrecta: Mostramos error
         pinError.style.display = 'block';
         pinInput.value = '';
         pinInput.focus();
     }
 }
 
-// Permitir que la tecla "Enter" funcione en el modal
 pinInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') verificarAccesoAdmin();
 });
 
 // ==========================================
-// 1. FUNCIÓN: BUSCAR ACTIVO (GET)
+// 1. FUNCIÓN: BUSCAR ACTIVO
 // ==========================================
 async function buscarActivo() {
-    const codigo = codigoInput.value.trim();
+    const codigo = document.getElementById('codigoInput').value.trim();
     if (!codigo) return;
-
-    resultCard.style.display = 'none';
-    errorTxt.style.display = 'none';
 
     try {
         const response = await fetch(`http://127.0.0.1:8000/activos/${codigo}`);
@@ -107,43 +105,68 @@ async function buscarActivo() {
 
         const activo = await response.json();
 
+        // Llenado de todos los datos
         document.getElementById('resNombre').innerText = activo.nombre;
-        document.getElementById('resMarca').innerText = activo.marca;
-        document.getElementById('resModelo').innerText = activo.modelo;
-        document.getElementById('resUbicacion').innerText = activo.ubicacion_actual;
-        document.getElementById('resEstado').innerText = activo.estado || 'Operativo';
+        document.getElementById('resCodActivo').innerText = activo.codigo_activo;
+        document.getElementById('resSerie').innerText = activo.serie || activo.placa;
+        document.getElementById('resUbiOri').innerText = activo.ubicacion_origen;
+        document.getElementById('resUbiDes').innerText = activo.ubicacion_destino;
+        document.getElementById('resRespOri').innerText = activo.responsable_origen;
+        document.getElementById('resRespDes').innerText = activo.responsable_destino;
+        document.getElementById('resCCOri').innerText = activo.centro_costos_origen;
+        document.getElementById('resCCDes').innerText = activo.centro_costos_destino;
+        document.getElementById('resPorcentaje').innerText = activo.porcentaje + '%';
+        document.getElementById('resSecuencia').innerText = activo.secuencia;
+        
+        const enlace = document.getElementById('resEnlace');
+        enlace.href = activo.enlace;
+        enlace.innerText = activo.enlace ? "Abrir Documento" : "No disponible";
 
-        resultCard.style.display = 'block';
+        document.getElementById('resultCard').style.display = 'block';
     } catch (error) {
-        errorTxt.style.display = 'block';
+        document.getElementById('errorTxt').style.display = 'block';
     }
 }
 
-// ==========================================
-// 2. FUNCIÓN: REGISTRAR ACTIVO (POST)
-// ==========================================
 async function registrarActivo() {
-    const codigo_barras = document.getElementById('regCodigo').value.trim();
+    // 1. Capturar los valores
+    const codigo_activo = document.getElementById('regCodigoActivo').value.trim();
+    const placa = document.getElementById('regPlaca').value.trim();
     const nombre = document.getElementById('regNombre').value.trim();
-    const marca = document.getElementById('regMarca').value.trim();
-    const modelo = document.getElementById('regModelo').value.trim();
-    const ubicacion_actual = document.getElementById('regUbicacion').value.trim();
+    const serie = document.getElementById('regSerie').value.trim();
+    const ubicacion_origen = document.getElementById('regUbiOrigen').value.trim();
+    const ubicacion_destino = document.getElementById('regUbiDestino').value.trim();
+    const responsable_origen = document.getElementById('regRespOrigen').value.trim();
+    const responsable_destino = document.getElementById('regRespDestino').value.trim();
+    const centro_costos_origen = document.getElementById('regCCOrigen').value.trim();
+    const centro_costos_destino = document.getElementById('regCCDestino').value.trim();
+    const porcentaje = document.getElementById('regPorcentaje').value.trim();
+    const secuencia = document.getElementById('regSecuencia').value.trim();
+    const enlace = document.getElementById('regEnlace').value.trim();
+    const archivo_plano = document.getElementById('regArchivoPlano').value.trim();
 
-    if (!codigo_barras || !nombre || !marca || !modelo || !ubicacion_actual) {
-        alert("Por favor, llena todos los campos obligatorios.");
+    // 2. CORRECCIÓN: Validar usando las variables correctas
+    if (!placa || !nombre || !codigo_activo) {
+        alert("Por favor, llena los campos obligatorios (*)");
         return;
     }
 
-    regSuccessTxt.style.display = 'none';
-    regErrorTxt.style.display = 'none';
-
+    // 3. Crear el objeto exactamente igual a la clase de Python
     const nuevoActivo = {
-        codigo_barras,
+        codigo_activo,
+        placa,
         nombre,
-        marca,
-        modelo,
-        ubicacion_actual,
-        estado: "Operativo"
+        serie,
+        ubicacion_origen,
+        ubicacion_destino,
+        responsable_origen,
+        responsable_destino,
+        centro_costos_origen: parseInt(centro_costos_origen) || 0,
+        centro_costos_destino: parseInt(centro_costos_destino) || 0,
+        porcentaje: parseFloat(porcentaje) || 0.0,
+        secuencia,
+        enlace,
+        archivo_plano
     };
 
     try {
@@ -153,17 +176,21 @@ async function registrarActivo() {
             body: JSON.stringify(nuevoActivo)
         });
 
-        if (!response.ok) throw new Error();
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || "Error al registrar");
+        }
 
-        regSuccessTxt.style.display = 'block';
+        document.getElementById('regSuccessTxt').style.display = 'block';
         document.getElementById('formRegistro').reset();
+        setTimeout(() => document.getElementById('regSuccessTxt').style.display = 'none', 3000);
     } catch (error) {
-        regErrorTxt.style.display = 'block';
+        alert(error.message);
     }
 }
 
 // ==========================================
-// 3. FUNCIÓN: REGISTRAR MOVIMIENTO/TRASLADO (POST)
+// 3. FUNCIÓN: REGISTRAR TRASLADO
 // ==========================================
 async function registrarTraslado() {
     const codigo_barras = document.getElementById('movCodigo').value.trim();
@@ -179,14 +206,13 @@ async function registrarTraslado() {
     movErrorTxt.style.display = 'none';
 
     const nuevoMovimiento = {
-        codigo_barras: codigo_barras,
+        codigo_barras,
         id_usuario: parseInt(id_usuario),
-        nueva_ubicacion: nueva_ubicacion,
-        observaciones: "Traslado rutinario desde interfaz de control"
+        nueva_ubicacion,
+        observaciones: "Traslado rutinario"
     };
 
     try {
-        
         const response = await fetch('http://127.0.0.1:8000/movimientos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -195,23 +221,20 @@ async function registrarTraslado() {
 
         if (!response.ok) throw new Error();
 
-
         movSuccessTxt.style.display = 'block';
         document.getElementById('formMovimiento').reset();
-        
-        // Actualizar la tabla de historial en tiempo real
         cargarHistorialTraslados();
+        
         if (codigoInput.value.trim() === codigo_barras) {
-    buscarActivo();
-}
-
+            buscarActivo();
+        }
     } catch (error) {
         movErrorTxt.style.display = 'block';
     }
 }
 
 // ==========================================
-// 4. FUNCIÓN: TRAER EL HISTORIAL (GET)
+// 4. FUNCIÓN: TRAER EL HISTORIAL
 // ==========================================
 async function cargarHistorialTraslados() {
     const tablaBody = document.getElementById('tablaHistorialBody');
@@ -219,10 +242,10 @@ async function cargarHistorialTraslados() {
     
     try {
         const response = await fetch('http://127.0.0.1:8000/historial');
-if (!response.ok) throw new Error();
+        if (!response.ok) throw new Error();
 
-const data = await response.json(); 
-const movimientos = data.registros; // <- ¡Aquí rescatamos la lista real!
+        const data = await response.json(); 
+        const movimientos = data.registros; 
         
         if (!movimientos || movimientos.length === 0) {
             tablaBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #86868b; padding: 20px;">No hay traslados registrados en el sistema.</td></tr>`;
@@ -234,7 +257,6 @@ const movimientos = data.registros; // <- ¡Aquí rescatamos la lista real!
         [...movimientos].reverse().forEach(mov => {
             let fechaRaw = mov.fecha_movimiento;
             let fechaFormateada = "Reciente";
-            
             if (fechaRaw) {
                 fechaFormateada = new Date(fechaRaw + 'Z').toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
             }
@@ -244,7 +266,7 @@ const movimientos = data.registros; // <- ¡Aquí rescatamos la lista real!
                 <td style="font-weight: 600; color: #0071e3; padding: 10px 0;">${mov.codigo_barras || '—'}</td>
                 <td style="padding: 10px 0;">${mov.nueva_ubicacion || '—'}</td>
                 <td style="color: #86868b; padding: 10px 0;">${fechaFormateada}</td>
-                <td style="text-align: center; padding: 10px 0;"><span style="background: #f5f5f7; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 500;">ID: ${mov.id_usuario || '—'}</span></td>
+                <td style="text-align: center; padding: 10px 0;"><span style="background: #f5f5f7; color: #1d1d1f; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">ID: ${mov.id_usuario || '—'}</span></td>
             `;
             tablaBody.appendChild(fila);
         });
@@ -254,14 +276,54 @@ const movimientos = data.registros; // <- ¡Aquí rescatamos la lista real!
     }
 }
 
-// --- EVENTOS DEL SISTEMA ---
-btnBuscar.addEventListener('click', buscarActivo);
-codigoInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') buscarActivo(); });
-
-btnRegistrar.addEventListener('click', registrarActivo);
-btnTrasladar.addEventListener('click', registrarTraslado);
-
-// Cargar por primera vez al abrir la app
-document.addEventListener("DOMContentLoaded", () => {
-    cargarHistorialTraslados();
-});
+// ==========================================
+// 5. IMPORTACIÓN CSV MASIVA
+// ==========================================
+const btnImportarCsv = document.getElementById('btnImportarCsv');
+if(btnImportarCsv){
+    btnImportarCsv.addEventListener('click', async () => {
+        const fileInput = document.getElementById('csvFile');
+        const successTxt = document.getElementById('csvSuccessTxt');
+        const errorTxt = document.getElementById('csvErrorTxt');
+        
+        successTxt.style.display = 'none';
+        errorTxt.style.display = 'none';
+        
+        if (fileInput.files.length === 0) {
+            errorTxt.innerText = 'Por favor, selecciona primero un archivo .csv';
+            errorTxt.style.display = 'block';
+            return;
+        }
+        
+        const archivo = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('archivo', archivo); 
+        
+        const textoOriginal = btnImportarCsv.innerText;
+        btnImportarCsv.innerText = 'Sincronizando...';
+        btnImportarCsv.disabled = true;
+        
+        try {
+            const respuesta = await fetch('http://127.0.0.1:8000/api/inventario/importar', {
+                method: 'POST',
+                body: formData
+            });
+            const resultado = await respuesta.json();
+            
+            if (respuesta.ok) {
+                successTxt.innerText = resultado.mensaje || '¡Procesado correctamente!';
+                successTxt.style.display = 'block';
+                fileInput.value = ''; 
+            } else {
+                errorTxt.innerText = `Error: ${resultado.detail}`;
+                errorTxt.style.display = 'block';
+            }
+        } catch (error) {
+            errorTxt.innerText = 'Error de conexión con FastAPI.';
+            errorTxt.style.display = 'block';
+        } finally {
+            btnImportarCsv.innerText = textoOriginal;
+            btnImportarCsv.disabled = false;
+        }
+    });
+}
