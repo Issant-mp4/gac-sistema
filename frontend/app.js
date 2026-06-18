@@ -8,34 +8,89 @@ const errorTxt = document.getElementById('errorTxt');
 const btnRegistrar = document.getElementById('btnRegistrar');
 const regSuccessTxt = document.getElementById('regSuccessTxt');
 const regErrorTxt = document.getElementById('regErrorTxt');
+
+// --- ELEMENTOS DE MÓDULO DE TRASLADOS ---
+const btnTrasladar = document.getElementById('btnTrasladar');
+const movSuccessTxt = document.getElementById('movSuccessTxt');
+const movErrorTxt = document.getElementById('movErrorTxt');
+
 // ==========================================
 // CONTROLADOR DE PESTAÑAS (MODULAR UX)
 // ==========================================
+// ==========================================
+// CONTROLADOR DE PESTAÑAS Y SEGURIDAD (UX)
+// ==========================================
+let adminDesbloqueado = false; // Variable que recuerda si ya ingresamos la clave
+
 function switchTab(tabId) {
-    // 1. Quitar el estado activo de todos los botones
+    // INTERCEPTOR DE SEGURIDAD: Si intentan entrar a registro y no están desbloqueados
+    if (tabId === 'modulo-registro' && !adminDesbloqueado) {
+        abrirModalSeguridad();
+        return; // Detenemos el cambio de pestaña
+    }
+
+    // Código original de cambio de pestaña
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    
-    // 2. Ocultar todos los contenidos de módulos
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active-content'));
     
-    // 3. Activar el botón que presionó el usuario
     const clickedBtn = Array.from(document.querySelectorAll('.tab-navigation button')).find(btn => btn.getAttribute('onclick').includes(tabId));
     if (clickedBtn) clickedBtn.classList.add('active');
     
-    // 4. Mostrar el módulo correspondiente con su animación elegante
     document.getElementById(tabId).classList.add('active-content');
 
-    // Limpiar alertas previas al cambiar de módulo
     errorTxt.style.display = 'none';
     resultCard.style.display = 'none';
     regSuccessTxt.style.display = 'none';
     regErrorTxt.style.display = 'none';
     movSuccessTxt.style.display = 'none';
     movErrorTxt.style.display = 'none';
+
+    if (tabId === 'modulo-traslado') {
+        cargarHistorialTraslados();
+    }
 }
 
-// ... AQUÍ DEBAJO SIGUE TODO TU CÓDIGO ANTERIOR RECIENTE DE:
-// buscarActivo(), registrarActivo() y registrarTraslado()...
+// --- FUNCIONES DEL MODAL DE SEGURIDAD ---
+const modalAdmin = document.getElementById('adminModal');
+const pinInput = document.getElementById('adminPinInput');
+const pinError = document.getElementById('pinErrorTxt');
+
+function abrirModalSeguridad() {
+    modalAdmin.classList.add('active-modal');
+    pinInput.value = '';
+    pinError.style.display = 'none';
+    setTimeout(() => pinInput.focus(), 100); // Autoselecciona el campo para teclear rápido
+}
+
+function cerrarModalSeguridad() {
+    modalAdmin.classList.remove('active-modal');
+    // Si cancela, nos aseguramos de que visualmente el botón "Consultar" vuelva a estar marcado
+    document.querySelector("button[onclick=\"switchTab('modulo-consulta')\"]").click();
+}
+
+function verificarAccesoAdmin() {
+    const pinIngresado = pinInput.value.trim();
+    // Aquí defines tu clave de administrador (ejemplo: 2026)
+    const PIN_CORRECTO = "2026"; 
+
+    if (pinIngresado === PIN_CORRECTO) {
+        // Clave correcta: Desbloqueamos, cerramos modal y permitimos el paso
+        adminDesbloqueado = true;
+        modalAdmin.classList.remove('active-modal');
+        switchTab('modulo-registro');
+    } else {
+        // Clave incorrecta: Mostramos error
+        pinError.style.display = 'block';
+        pinInput.value = '';
+        pinInput.focus();
+    }
+}
+
+// Permitir que la tecla "Enter" funcione en el modal
+pinInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') verificarAccesoAdmin();
+});
+
 // ==========================================
 // 1. FUNCIÓN: BUSCAR ACTIVO (GET)
 // ==========================================
@@ -48,7 +103,6 @@ async function buscarActivo() {
 
     try {
         const response = await fetch(`http://127.0.0.1:8000/activos/${codigo}`);
-        
         if (!response.ok) throw new Error();
 
         const activo = await response.json();
@@ -60,7 +114,6 @@ async function buscarActivo() {
         document.getElementById('resEstado').innerText = activo.estado || 'Operativo';
 
         resultCard.style.display = 'block';
-
     } catch (error) {
         errorTxt.style.display = 'block';
     }
@@ -70,14 +123,12 @@ async function buscarActivo() {
 // 2. FUNCIÓN: REGISTRAR ACTIVO (POST)
 // ==========================================
 async function registrarActivo() {
-    // Capturamos los datos del formulario
     const codigo_barras = document.getElementById('regCodigo').value.trim();
     const nombre = document.getElementById('regNombre').value.trim();
     const marca = document.getElementById('regMarca').value.trim();
     const modelo = document.getElementById('regModelo').value.trim();
     const ubicacion_actual = document.getElementById('regUbicacion').value.trim();
 
-    // Validación simple de campos vacíos
     if (!codigo_barras || !nombre || !marca || !modelo || !ubicacion_actual) {
         alert("Por favor, llena todos los campos obligatorios.");
         return;
@@ -86,7 +137,6 @@ async function registrarActivo() {
     regSuccessTxt.style.display = 'none';
     regErrorTxt.style.display = 'none';
 
-    // Creamos el objeto JSON tal como lo pide tu modelo Pydantic del backend
     const nuevoActivo = {
         codigo_barras,
         nombre,
@@ -99,90 +149,23 @@ async function registrarActivo() {
     try {
         const response = await fetch('http://127.0.0.1:8000/activos', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(nuevoActivo)
         });
 
         if (!response.ok) throw new Error();
 
-        // Si todo sale bien, mostramos éxito y limpiamos el formulario
         regSuccessTxt.style.display = 'block';
         document.getElementById('formRegistro').reset();
-
     } catch (error) {
         regErrorTxt.style.display = 'block';
     }
 }
 
-// --- EVENTOS DEL SISTEMA ---
-btnBuscar.addEventListener('click', buscarActivo);
-codigoInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') buscarActivo(); });
-
-btnRegistrar.addEventListener('click', registrarActivo);
-
-// --- ELEMENTOS DE MÓDULO DE TRASLADOS ---
-const btnTrasladar = document.getElementById('btnTrasladar');
-const movSuccessTxt = document.getElementById('movSuccessTxt');
-const movErrorTxt = document.getElementById('movErrorTxt');
-cargarHistorialTraslados();
-
 // ==========================================
 // 3. FUNCIÓN: REGISTRAR MOVIMIENTO/TRASLADO (POST)
 // ==========================================
 async function registrarTraslado() {
-
-
-
-// ==========================================
-// 4. FUNCIÓN: TRAER EL HISTORIAL DESDE TU API REAL
-// ==========================================
-async function cargarHistorialTraslados() {
-    const tablaBody = document.getElementById('tablaHistorialBody');
-    if (!tablaBody) return; // Evita errores si no encuentra la tabla
-    
-    try {
-        const response = await fetch('http://127.0.0.1:8000/historial');
-        if (!response.ok) throw new Error();
-        
-        const data = await response.json();
-        const movimientos = data.registros; 
-        
-        if (!movimientos || movimientos.length === 0) {
-            tablaBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #86868b; padding: 20px;">No hay traslados registrados en el sistema.</td></tr>`;
-            return;
-        }
-        
-        tablaBody.innerHTML = '';
-        
-        [...movimientos].reverse().forEach(mov => {
-            let fechaFormateada = mov.fecha_movimiento;
-            if (fechaFormateada) {
-                fechaFormateada = new Date(fechaFormateada).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
-            } else {
-                fechaFormateada = "Reciente";
-            }
-
-            const fila = document.createElement('tr');
-            fila.innerHTML = `
-                <td style="font-weight: 600; color: #0071e3;">${mov.codigo_barras}</td>
-                <td>${mov.nueva_ubicacion}</td>
-                <td style="color: #86868b;">${fechaFormateada}</td>
-                <td style="text-align: center;"><span style="background: #f5f5f7; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 500;">ID: ${mov.id_usuario}</span></td>
-            `;
-            tablaBody.appendChild(fila);
-        });
-        
-    } catch (error) {
-        console.error("Error cargando historial:", error);
-        tablaBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ff3b30; padding: 20px;">Error al conectar con el servidor de historial.</td></tr>`;
-    }
-}
-
-
-
-
     const codigo_barras = document.getElementById('movCodigo').value.trim();
     const nueva_ubicacion = document.getElementById('movUbicacion').value.trim();
     const id_usuario = document.getElementById('movUsuario').value.trim();
@@ -195,7 +178,6 @@ async function cargarHistorialTraslados() {
     movSuccessTxt.style.display = 'none';
     movErrorTxt.style.display = 'none';
 
-    // Construimos el JSON con la estructura exacta que espera tu 'MovimientoInput' del backend
     const nuevoMovimiento = {
         codigo_barras: codigo_barras,
         id_usuario: parseInt(id_usuario),
@@ -204,111 +186,82 @@ async function cargarHistorialTraslados() {
     };
 
     try {
+        
         const response = await fetch('http://127.0.0.1:8000/movimientos', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(nuevoMovimiento)
         });
 
         if (!response.ok) throw new Error();
 
-        // Éxito: Mostramos mensaje y limpiamos campos
+
         movSuccessTxt.style.display = 'block';
         document.getElementById('formMovimiento').reset();
         
-        // Opcional: Si el activo modificado estaba abierto en la consulta de la izquierda, la refresca solo
+        // Actualizar la tabla de historial en tiempo real
+        cargarHistorialTraslados();
         if (codigoInput.value.trim() === codigo_barras) {
-            buscarActivo();
-        }
+    buscarActivo();
+}
 
     } catch (error) {
         movErrorTxt.style.display = 'block';
     }
 }
 
-// Escuchar el botón de traslado
-btnTrasladar.addEventListener('click', registrarTraslado);
-
-
 // ==========================================
-// 4. FUNCIÓN: TRAER EL HISTORIAL DESDE TU API REAL
+// 4. FUNCIÓN: TRAER EL HISTORIAL (GET)
 // ==========================================
 async function cargarHistorialTraslados() {
     const tablaBody = document.getElementById('tablaHistorialBody');
+    if (!tablaBody) return;
     
     try {
-        // 1. Apuntamos a tu endpoint real de historial
         const response = await fetch('http://127.0.0.1:8000/historial');
+if (!response.ok) throw new Error();
+
+const data = await response.json(); 
+const movimientos = data.registros; // <- ¡Aquí rescatamos la lista real!
         
-        if (!response.ok) throw new Error();
-        
-        const data = await response.json();
-        
-        // 2. Extraemos el arreglo 'registros' que viene en tu JSON del backend
-        const movimientos = data.registros; 
-        
-        // Si no hay traslados guardados todavía en la BD
         if (!movimientos || movimientos.length === 0) {
             tablaBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #86868b; padding: 20px;">No hay traslados registrados en el sistema.</td></tr>`;
             return;
         }
         
-        // Limpiamos la tabla antes de rellenarla
         tablaBody.innerHTML = '';
         
-        // 3. Los recorremos en reversa para mostrar los más nuevos arriba en el historial
-        // Hacemos una copia con el operador spread [...] para no alterar el array original
         [...movimientos].reverse().forEach(mov => {
-            // Formateamos la fecha si tu backend la provee
-            let fechaFormateada = mov.fecha_movimiento;
-            if (fechaFormateada) {
-                fechaFormateada = new Date(fechaFormateada).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
-            } else {
-                fechaFormateada = "Reciente";
+            let fechaRaw = mov.fecha_movimiento;
+            let fechaFormateada = "Reciente";
+            
+            if (fechaRaw) {
+                fechaFormateada = new Date(fechaRaw + 'Z').toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
             }
 
             const fila = document.createElement('tr');
             fila.innerHTML = `
-                <td style="font-weight: 600; color: #0071e3;">${mov.codigo_barras}</td>
-                <td>${mov.nueva_ubicacion}</td>
-                <td style="color: #86868b;">${fechaFormateada}</td>
-                <td style="text-align: center;"><span style="background: #f5f5f7; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 500;">ID: ${mov.id_usuario}</span></td>
+                <td style="font-weight: 600; color: #0071e3; padding: 10px 0;">${mov.codigo_barras || '—'}</td>
+                <td style="padding: 10px 0;">${mov.nueva_ubicacion || '—'}</td>
+                <td style="color: #86868b; padding: 10px 0;">${fechaFormateada}</td>
+                <td style="text-align: center; padding: 10px 0;"><span style="background: #f5f5f7; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 500;">ID: ${mov.id_usuario || '—'}</span></td>
             `;
             tablaBody.appendChild(fila);
         });
         
     } catch (error) {
-        console.error("Error cargando historial:", error);
         tablaBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ff3b30; padding: 20px;">Error al conectar con el servidor de historial.</td></tr>`;
     }
 }
 
-// ==========================================
-// MODIFICACIÓN DE LA FUNCIÓN DE TRASLADO EXISTENTE
-// ==========================================
-// Vamos a hacer que cuando registres un traslado con éxito, la tabla se actualice sola de inmediato.
-// Busca dentro de tu función registrarTraslado() actual y, justo debajo de donde dice:
-// movSuccessTxt.style.display = 'block';
-// AGREGA ESTA LÍNEA DE CÓDIGO:
-// cargarHistorialTraslados(); 
+// --- EVENTOS DEL SISTEMA ---
+btnBuscar.addEventListener('click', buscarActivo);
+codigoInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') buscarActivo(); });
 
+btnRegistrar.addEventListener('click', registrarActivo);
+btnTrasladar.addEventListener('click', registrarTraslado);
 
-// ==========================================
-// DISPARADORES AUTOMÁTICOS
-// ==========================================
-// Modificamos el switchTab para que cargue el historial de forma automática al pisar la pestaña de traslados
-const originalSwitchTab = switchTab;
-switchTab = function(tabId) {
-    originalSwitchTab(tabId);
-    if (tabId === 'modulo-traslado') {
-        cargarHistorialTraslados();
-    }
-};
-
-// Cargar por primera vez al abrir la app por si acaso
+// Cargar por primera vez al abrir la app
 document.addEventListener("DOMContentLoaded", () => {
-    // Si tu backend ya está arriba, va mapeando los datos en segundo plano
     cargarHistorialTraslados();
 });

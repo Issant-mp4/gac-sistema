@@ -16,7 +16,7 @@
     <div class="container">
         <header>
             <h1>GAC</h1>
-            <p>Clínica San Rafael — Gestión de Activos Celar</p>
+            <p>Clínica San Rafael — Gestión de Activos FIjos</p>
         </header>
 
         <div class="tab-navigation">
@@ -33,7 +33,7 @@
                     <input type="text" id="codigoInput" class="search-input" placeholder="Ej. 1532-CR-000001" autofocus autocomplete="off">
                 </div>
                 <button class="btn-primary" id="btnBuscar">Consultar Activo</button>
-                <div class="error-message" id="errorTxt">No se encontró ningún activo con ese código.</div>
+                <div class="error-message" id="errorTxt">No se encontró ningún activo con esa placa.</div>
             </div>
 
             <div class="result-card max-width-card" id="resultCard">
@@ -76,26 +76,8 @@
                     </div>
                     <button type="button" class="btn-primary btn-warning" id="btnTrasladar">Confirmar Traslado</button>
                 </form>
-                <div id="modulo-lado" class="tab-content">
-            <div class="card max-width-card">
-                <h3 class="section-title">Registrar Traslado / Movimiento</h3>
-                <form id="formMovimiento" onsubmit="event.preventDefault();">
-                    <div class="input-group">
-                        <label>Escanear Código del Equipo *</label>
-                        <input type="text" id="movCodigo" class="search-input" placeholder="Ej. ZEB-001" autocomplete="off">
-                    </div>
-                    <div class="input-group">
-                        <label>Nueva Ubicación Destino *</label>
-                        <input type="text" id="movUbicacion" class="search-input" placeholder="Ej. Hospitalización - Cama 204">
-                    </div>
-                    <div class="input-group">
-                        <label>ID Funcionario Responsable *</label>
-                        <input type="number" id="movUsuario" class="search-input" placeholder="Ej. 102">
-                    </div>
-                    <button type="button" class="btn-primary btn-warning" id="btnTrasladar">Confirmar Traslado</button>
-                </form>
                 <div class="success-toast" id="movSuccessTxt">¡Traslado registrado con éxito! Ubicación actualizada.</div>
-                <div class="error-message" id="movErrorTxt">Error: El código de barras no existe.</div>
+                <div class="error-message" id="movErrorTxt">Error: La placa del activo no existe.</div>
             </div>
 
             <div class="card max-width-card" style="margin-top: 20px;">
@@ -107,7 +89,7 @@
                                 <th>Código</th>
                                 <th>Ubicación Destino</th>
                                 <th>Fecha y Hora</th>
-                                <th>Responsable</th>
+                                <th style="text-align: center;">Responsable</th>
                             </tr>
                         </thead>
                         <tbody id="tablaHistorialBody">
@@ -117,10 +99,6 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
-                <div class="success-toast" id="movSuccessTxt">¡Traslado registrado con éxito! Ubicación actualizada.</div>
-                <div class="error-message" id="movErrorTxt">Error: El código de barras no existe.</div>
             </div>
         </div>
 
@@ -146,7 +124,7 @@
                     </div>
                     <div class="input-group">
                         <label>Ubicación Inicial *</label>
-                        <input type="text" id="regUbicacion" class="search-input" placeholder="Ej. URGENCIAS " required>
+                        <input type="text" id="regUbicacion" class="search-input" placeholder="Ej. URGENCIAS" required>
                     </div>
                     <button type="button" class="btn-primary btn-success" id="btnRegistrar">Guardar en Sistema</button>
                 </form>
@@ -155,6 +133,24 @@
             </div>
         </div>
 
+    </div>
+
+<div id="adminModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 class="section-title" style="margin-bottom: 10px;">Acceso Restringido</h3>
+            <p style="color: #86868b; font-size: 14px; margin-bottom: 20px;">Ingrese el PIN de administrador de Activos Fijos para desbloquear este módulo.</p>
+            
+            <div class="input-group">
+                <input type="password" id="adminPinInput" class="search-input" placeholder="••••" style="text-align: center; font-size: 24px; letter-spacing: 4px;" autocomplete="off">
+            </div>
+            
+            <div class="error-message" id="pinErrorTxt" style="margin-bottom: 15px;">PIN incorrecto. Intente nuevamente.</div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn-cancel" onclick="cerrarModalSeguridad()">Cancelar</button>
+                <button class="btn-primary" onclick="verificarAccesoAdmin()">Desbloquear</button>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
