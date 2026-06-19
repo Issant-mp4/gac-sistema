@@ -1,3 +1,4 @@
+from fastapi.staticfiles import StaticFiles
 import os
 import sys
 
@@ -124,3 +125,5 @@ def registrar_movimiento(datos: MovimientoInput, db: Session = Depends(get_db)):
 def ver_historial(db: Session = Depends(get_db)):
     registros = db.query(models.MovimientoDB).all()
     return {"total_movimientos": len(registros), "registros": registros}
+
+app.mount("/", StaticFiles(directory="../frontend", html=True), name="static")
