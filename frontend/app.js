@@ -12,12 +12,17 @@ const btnTrasladar = document.getElementById('btnTrasladar');
 const movSuccessTxt = document.getElementById('movSuccessTxt');
 const movErrorTxt = document.getElementById('movErrorTxt');
 
+const codigoInput2 = document.getElementById('codigoInput2');
+const btnInventario = document.getElementById('btnInventario');
+const movResult = document.getElementById('movResult');
+const movErrorinv = document.getElementById('movErrorTxt');
+
 // --- EVENTOS DE INICIO ---
 document.addEventListener('DOMContentLoaded', () => {
     btnBuscar.addEventListener('click', buscarActivo);
     btnRegistrar.addEventListener('click', registrarActivo);
     btnTrasladar.addEventListener('click', registrarTraslado);
-
+    btnInventario.addEventListener('click', buscarInventario);
     codigoInput.addEventListener('keydown', (e) => { 
         if (e.key === 'Enter') {
             e.preventDefault(); 
@@ -326,4 +331,41 @@ if(btnImportarCsv){
             btnImportarCsv.disabled = false;
         }
     });
+     // ==========================================
+    // 5. BOTON DE INVENTARIO DE ACTIVOS 
+   // ==========================================
+     async function buscarInventario() {
+    const codigo = document.getElementById('codigoInput2').value.trim();
+    if (!codigo) return;
+
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/activos/${codigo}`);
+        if (!response.ok) throw new Error();
+
+        const activo = await response.json();
+
+        // Llenado de todos los datos
+        document.getElementById('resNombre').innerText = activo.nombre;
+        document.getElementById('resCodActivo').innerText = activo.codigo_activo;
+        document.getElementById('resSerie').innerText = activo.serie || activo.placa;
+        document.getElementById('resUbiOri').innerText = activo.ubicacion_origen;
+        document.getElementById('resUbiDes').innerText = activo.ubicacion_destino;
+        document.getElementById('resRespOri').innerText = activo.responsable_origen;
+        document.getElementById('resRespDes').innerText = activo.responsable_destino;
+        document.getElementById('resCCOri').innerText = activo.centro_costos_origen;
+        document.getElementById('resCCDes').innerText = activo.centro_costos_destino;
+        document.getElementById('resPorcentaje').innerText = activo.porcentaje + '%';
+        document.getElementById('resSecuencia').innerText = activo.secuencia;
+        
+        const enlace = document.getElementById('resEnlace');
+        enlace.href = activo.enlace;
+        enlace.innerText = activo.enlace ? "Abrir Documento" : "No disponible";
+
+        document.getElementById('resultCard').style.display = 'block';
+    } catch (error) {
+        document.getElementById('errorTxt').style.display = 'block';
+    }
 }
+
+}
+    
