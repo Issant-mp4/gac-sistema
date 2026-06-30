@@ -12,17 +12,14 @@ const btnTrasladar = document.getElementById('btnTrasladar');
 const movSuccessTxt = document.getElementById('movSuccessTxt');
 const movErrorTxt = document.getElementById('movErrorTxt');
 
-const codigoInput2 = document.getElementById('codigoInput2');
-const btnInventario = document.getElementById('btnInventario');
-const movResult = document.getElementById('movResult');
-const movErrorinv = document.getElementById('movErrorTxt');
+let datosInventario = []; 
 
 // --- EVENTOS DE INICIO ---
 document.addEventListener('DOMContentLoaded', () => {
     btnBuscar.addEventListener('click', buscarActivo);
     btnRegistrar.addEventListener('click', registrarActivo);
     btnTrasladar.addEventListener('click', registrarTraslado);
-    btnInventario.addEventListener('click', buscarInventario);
+    
     codigoInput.addEventListener('keydown', (e) => { 
         if (e.key === 'Enter') {
             e.preventDefault(); 
@@ -31,12 +28,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     cargarHistorialTraslados();
+    cargarInventarioCompleto();
+
+    // INICIAR FECHA DEL ACTA DE ENTRADA
+    const hoy = new Date();
+    document.getElementById('uiDia').value = String(hoy.getDate()).padStart(2, '0');
+    document.getElementById('uiMes').value = String(hoy.getMonth() + 1).padStart(2, '0');
+    document.getElementById('uiAnio').value = hoy.getFullYear();
+    agregarFilaUI(); 
 });
 
-// ==========================================
-// CONTROLADOR DE PESTAÑAS Y SEGURIDAD
-// ==========================================
+// --- CONTROLADOR DE PESTAÑAS Y SEGURIDAD ---
 let adminDesbloqueado = false; 
+const modalAdmin = document.getElementById('adminModal');
+const pinInput = document.getElementById('adminPinInput');
+const pinError = document.getElementById('pinErrorTxt');
 
 function switchTab(tabId) {
     if (tabId === 'modulo-registro' && !adminDesbloqueado) {
@@ -59,14 +65,8 @@ function switchTab(tabId) {
     movSuccessTxt.style.display = 'none';
     movErrorTxt.style.display = 'none';
 
-    if (tabId === 'modulo-traslado') {
-        cargarHistorialTraslados();
-    }
+    if (tabId === 'modulo-traslado') cargarHistorialTraslados();
 }
-
-const modalAdmin = document.getElementById('adminModal');
-const pinInput = document.getElementById('adminPinInput');
-const pinError = document.getElementById('pinErrorTxt');
 
 function abrirModalSeguridad() {
     modalAdmin.classList.add('active-modal');
@@ -81,8 +81,7 @@ function cerrarModalSeguridad() {
 }
 
 function verificarAccesoAdmin() {
-    const pinIngresado = pinInput.value.trim();
-    if (pinIngresado === "2026") {
+    if (pinInput.value.trim() === "2026") {
         adminDesbloqueado = true;
         modalAdmin.classList.remove('active-modal');
         switchTab('modulo-registro');
@@ -92,25 +91,17 @@ function verificarAccesoAdmin() {
         pinInput.focus();
     }
 }
+pinInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verificarAccesoAdmin(); });
 
-pinInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') verificarAccesoAdmin();
-});
-
-// ==========================================
-// 1. FUNCIÓN: BUSCAR ACTIVO
-// ==========================================
+// --- FUNCIONES API ---
 async function buscarActivo() {
     const codigo = document.getElementById('codigoInput').value.trim();
     if (!codigo) return;
-
     try {
         const response = await fetch(`http://127.0.0.1:8000/activos/${codigo}`);
         if (!response.ok) throw new Error();
-
         const activo = await response.json();
-
-        // Llenado de todos los datos
+        
         document.getElementById('resNombre').innerText = activo.nombre;
         document.getElementById('resCodActivo').innerText = activo.codigo_activo;
         document.getElementById('resSerie').innerText = activo.serie || activo.placa;
@@ -126,7 +117,6 @@ async function buscarActivo() {
         const enlace = document.getElementById('resEnlace');
         enlace.href = activo.enlace;
         enlace.innerText = activo.enlace ? "Abrir Documento" : "No disponible";
-
         document.getElementById('resultCard').style.display = 'block';
     } catch (error) {
         document.getElementById('errorTxt').style.display = 'block';
@@ -134,44 +124,30 @@ async function buscarActivo() {
 }
 
 async function registrarActivo() {
-    // 1. Capturar los valores
-    const codigo_activo = document.getElementById('regCodigoActivo').value.trim();
     const placa = document.getElementById('regPlaca').value.trim();
     const nombre = document.getElementById('regNombre').value.trim();
-    const serie = document.getElementById('regSerie').value.trim();
-    const ubicacion_origen = document.getElementById('regUbiOrigen').value.trim();
-    const ubicacion_destino = document.getElementById('regUbiDestino').value.trim();
-    const responsable_origen = document.getElementById('regRespOrigen').value.trim();
-    const responsable_destino = document.getElementById('regRespDestino').value.trim();
-    const centro_costos_origen = document.getElementById('regCCOrigen').value.trim();
-    const centro_costos_destino = document.getElementById('regCCDestino').value.trim();
-    const porcentaje = document.getElementById('regPorcentaje').value.trim();
-    const secuencia = document.getElementById('regSecuencia').value.trim();
-    const enlace = document.getElementById('regEnlace').value.trim();
-    const archivo_plano = document.getElementById('regArchivoPlano').value.trim();
+    const codigo_activo = document.getElementById('regCodigoActivo').value.trim();
 
-    // 2. CORRECCIÓN: Validar usando las variables correctas
     if (!placa || !nombre || !codigo_activo) {
         alert("Por favor, llena los campos obligatorios (*)");
         return;
     }
 
-    // 3. Crear el objeto exactamente igual a la clase de Python
     const nuevoActivo = {
-        codigo_activo,
-        placa,
-        nombre,
-        serie,
-        ubicacion_origen,
-        ubicacion_destino,
-        responsable_origen,
-        responsable_destino,
-        centro_costos_origen: parseInt(centro_costos_origen) || 0,
-        centro_costos_destino: parseInt(centro_costos_destino) || 0,
-        porcentaje: parseFloat(porcentaje) || 0.0,
-        secuencia,
-        enlace,
-        archivo_plano
+        codigo_activo: codigo_activo,
+        placa: placa,
+        nombre: nombre,
+        serie: document.getElementById('regSerie').value.trim(),
+        ubicacion_origen: document.getElementById('regUbiOrigen').value.trim(),
+        ubicacion_destino: document.getElementById('regUbiDestino').value.trim(),
+        responsable_origen: document.getElementById('regRespOrigen').value.trim(),
+        responsable_destino: document.getElementById('regRespDestino').value.trim(),
+        centro_costos_origen: parseInt(document.getElementById('regCCOrigen').value.trim()) || 0,
+        centro_costos_destino: parseInt(document.getElementById('regCCDestino').value.trim()) || 0,
+        porcentaje: parseFloat(document.getElementById('regPorcentaje').value.trim()) || 0.0,
+        secuencia: document.getElementById('regSecuencia').value.trim(),
+        enlace: document.getElementById('regEnlace').value.trim(),
+        archivo_plano: document.getElementById('regArchivoPlano').value.trim()
     };
 
     try {
@@ -180,12 +156,10 @@ async function registrarActivo() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(nuevoActivo)
         });
-
         if (!response.ok) {
             const err = await response.json();
             throw new Error(err.detail || "Error al registrar");
         }
-
         document.getElementById('regSuccessTxt').style.display = 'block';
         document.getElementById('formRegistro').reset();
         setTimeout(() => document.getElementById('regSuccessTxt').style.display = 'none', 3000);
@@ -194,9 +168,6 @@ async function registrarActivo() {
     }
 }
 
-// ==========================================
-// 3. FUNCIÓN: REGISTRAR TRASLADO
-// ==========================================
 async function registrarTraslado() {
     const codigo_barras = document.getElementById('movCodigo').value.trim();
     const nueva_ubicacion = document.getElementById('movUbicacion').value.trim();
@@ -207,15 +178,7 @@ async function registrarTraslado() {
         return;
     }
 
-    movSuccessTxt.style.display = 'none';
-    movErrorTxt.style.display = 'none';
-
-    const nuevoMovimiento = {
-        codigo_barras,
-        id_usuario: parseInt(id_usuario),
-        nueva_ubicacion,
-        observaciones: "Traslado rutinario"
-    };
+    const nuevoMovimiento = { codigo_barras, id_usuario: parseInt(id_usuario), nueva_ubicacion, observaciones: "Traslado rutinario" };
 
     try {
         const response = await fetch('http://127.0.0.1:8000/movimientos', {
@@ -223,32 +186,22 @@ async function registrarTraslado() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(nuevoMovimiento)
         });
-
         if (!response.ok) throw new Error();
 
-        movSuccessTxt.style.display = 'block';
+        document.getElementById('movSuccessTxt').style.display = 'block';
         document.getElementById('formMovimiento').reset();
         cargarHistorialTraslados();
-        
-        if (codigoInput.value.trim() === codigo_barras) {
-            buscarActivo();
-        }
     } catch (error) {
-        movErrorTxt.style.display = 'block';
+        document.getElementById('movErrorTxt').style.display = 'block';
     }
 }
 
-// ==========================================
-// 4. FUNCIÓN: TRAER EL HISTORIAL
-// ==========================================
 async function cargarHistorialTraslados() {
     const tablaBody = document.getElementById('tablaHistorialBody');
     if (!tablaBody) return;
-    
     try {
         const response = await fetch('http://127.0.0.1:8000/historial');
         if (!response.ok) throw new Error();
-
         const data = await response.json(); 
         const movimientos = data.registros; 
         
@@ -258,13 +211,9 @@ async function cargarHistorialTraslados() {
         }
         
         tablaBody.innerHTML = '';
-        
         [...movimientos].reverse().forEach(mov => {
             let fechaRaw = mov.fecha_movimiento;
-            let fechaFormateada = "Reciente";
-            if (fechaRaw) {
-                fechaFormateada = new Date(fechaRaw + 'Z').toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
-            }
+            let fechaFormateada = fechaRaw ? new Date(fechaRaw + 'Z').toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : "Reciente";
 
             const fila = document.createElement('tr');
             fila.innerHTML = `
@@ -275,97 +224,155 @@ async function cargarHistorialTraslados() {
             `;
             tablaBody.appendChild(fila);
         });
-        
     } catch (error) {
-        tablaBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ff3b30; padding: 20px;">Error al conectar con el servidor de historial.</td></tr>`;
+        tablaBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ff3b30; padding: 20px;">Error de servidor.</td></tr>`;
     }
 }
 
-// ==========================================
-// 5. IMPORTACIÓN CSV MASIVA
-// ==========================================
-const btnImportarCsv = document.getElementById('btnImportarCsv');
-if(btnImportarCsv){
-    btnImportarCsv.addEventListener('click', async () => {
-        const fileInput = document.getElementById('csvFile');
-        const successTxt = document.getElementById('csvSuccessTxt');
-        const errorTxt = document.getElementById('csvErrorTxt');
-        
-        successTxt.style.display = 'none';
-        errorTxt.style.display = 'none';
-        
-        if (fileInput.files.length === 0) {
-            errorTxt.innerText = 'Por favor, selecciona primero un archivo .csv';
-            errorTxt.style.display = 'block';
-            return;
-        }
-        
-        const archivo = fileInput.files[0];
-        const formData = new FormData();
-        formData.append('archivo', archivo); 
-        
-        const textoOriginal = btnImportarCsv.innerText;
-        btnImportarCsv.innerText = 'Sincronizando...';
-        btnImportarCsv.disabled = true;
-        
-        try {
-            const respuesta = await fetch('http://127.0.0.1:8000/api/inventario/importar', {
-                method: 'POST',
-                body: formData
-            });
-            const resultado = await respuesta.json();
-            
-            if (respuesta.ok) {
-                successTxt.innerText = resultado.mensaje || '¡Procesado correctamente!';
-                successTxt.style.display = 'block';
-                fileInput.value = ''; 
+// --- BUSCADOR DEL INVENTARIO (EXCEL) ---
+async function cargarInventarioCompleto() {
+    try {
+        const response = await fetch('http://127.0.0.1:8000/api/inventario-completo');
+        datosInventario = await response.json();
+        renderizarTabla(datosInventario);
+    } catch (error) {
+        console.error("Error al cargar inventario:", error);
+    }
+}
+
+function renderizarTabla(datos) {
+    const tabla = document.getElementById("tabla-inventario");
+    if (!datos || datos.length === 0) {
+        tabla.innerHTML = "<tr><td colspan='24'>No hay datos disponibles</td></tr>";
+        return;
+    }
+
+    const cabeceras = Object.keys(datos[0]);
+    let thead = "<thead><tr>" + cabeceras.map(col => `<th>${col}</th>`).join("") + "</tr></thead>";
+    let tbody = "<tbody>" + datos.map(fila => {
+        return "<tr>" + cabeceras.map(col => `<td>${fila[col]}</td>`).join("") + "</tr>";
+    }).join("") + "</tbody>";
+    
+    tabla.innerHTML = thead + tbody;
+}
+
+document.getElementById('busquedaInventario')?.addEventListener('input', (e) => {
+    const termino = e.target.value.toLowerCase();
+    const filtrados = datosInventario.filter(fila => {
+        return Object.values(fila).some(valor => String(valor).toLowerCase().includes(termino));
+    });
+    renderizarTabla(filtrados);
+});
+
+// --- LÓGICA DEL ACTA Y LECTOR ZEBRA ---
+function agregarFilaUI(placa = '', desc = '', marca = '', modelo = '', serie = '', cant = '1') {
+    const tbody = document.getElementById('uiTablaBody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><input type="number" class="t-cant" value="${cant}" min="1"></td>
+        <td><input type="text" class="t-desc" value="${desc}" placeholder="Descripción..."></td>
+        <td><input type="text" class="t-placa req-row" value="${placa}" placeholder="Código..." style="font-weight:bold; color:#66b3ff;"></td>
+        <td><input type="text" class="t-marca" value="${marca}" placeholder="Marca..."></td>
+        <td><input type="text" class="t-modelo" value="${modelo}" placeholder="Modelo..."></td>
+        <td><input type="text" class="t-serie" value="${serie}" placeholder="S/N..."></td>
+        <td style="text-align: center;"><button type="button" class="btn-del" onclick="this.closest('tr').remove()">X</button></td>
+    `;
+    tbody.appendChild(tr);
+}
+
+const zebraInput = document.getElementById('zebraInput');
+if(zebraInput) {
+    zebraInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === 'Tab') {
+            e.preventDefault();
+            const rawScan = zebraInput.value.trim();
+            if (!rawScan) return;
+
+            const parts = rawScan.split(/[,|\t]/);
+            if(parts.length > 1) {
+                agregarFilaUI(parts[0]||'', parts[1]||'', parts[2]||'', parts[3]||'', parts[4]||'');
             } else {
-                errorTxt.innerText = `Error: ${resultado.detail}`;
-                errorTxt.style.display = 'block';
+                agregarFilaUI(rawScan, '', '', '', '');
             }
-        } catch (error) {
-            errorTxt.innerText = 'Error de conexión con FastAPI.';
-            errorTxt.style.display = 'block';
-        } finally {
-            btnImportarCsv.innerText = textoOriginal;
-            btnImportarCsv.disabled = false;
+            zebraInput.value = '';
+            zebraInput.style.backgroundColor = '#d4edda';
+            setTimeout(() => zebraInput.style.backgroundColor = '#f0fff4', 300);
         }
     });
-     // ==========================================
-    // 5. BOTON DE INVENTARIO DE ACTIVOS 
-   // ==========================================
-     async function buscarInventario() {
-    const codigo = document.getElementById('codigoInput2').value.trim();
-    if (!codigo) return;
+}
+
+document.addEventListener('input', (e) => {
+    if(e.target.classList.contains('error-border') && e.target.value.trim() !== '') {
+        e.target.classList.remove('error-border');
+    }
+});
+
+async function exportarActaCompleta(btnElement) {
+    let esValido = true;
+    document.querySelectorAll('.req').forEach(input => {
+        if(!input.value.trim()) { 
+            input.classList.add('error-border'); 
+            esValido = false; 
+        } else { 
+            input.classList.remove('error-border'); 
+        }
+    });
+
+    const filasUi = document.querySelectorAll('#uiTablaBody tr');
+    if(filasUi.length === 0 || !esValido) {
+        alert("Completa los campos obligatorios y agrega al menos un activo.");
+        return;
+    }
+
+    const items = [];
+    filasUi.forEach(tr => {
+        items.push({
+            cant: parseInt(tr.querySelector('.t-cant')?.value) || 1,
+            desc: tr.querySelector('.t-desc')?.value.trim() || '---',
+            placa: tr.querySelector('.t-placa')?.value.trim() || '---',
+            marca: tr.querySelector('.t-marca')?.value.trim() || '---',
+            modelo: tr.querySelector('.t-modelo')?.value.trim() || 'NA',
+            serie: tr.querySelector('.t-serie')?.value.trim() || 'NA'
+        });
+    });
+
+    const getVal = id => document.getElementById(id)?.value.trim() || "";
+    const getRadioVal = name => document.querySelector(`input[name="${name}"]:checked`)?.value || "";
+
+    const payload = {
+        dia: getVal('uiDia'), mes: getVal('uiMes'), anio: getVal('uiAnio'),
+        concepto: getRadioVal('concepto') || 'Compra', numero: getVal('uiNumero') || 'N/A',
+        tipo: getRadioVal('tipo') || 'Equipos De Oficina y varios', proveedor: getVal('uiProveedor'),
+        factura: getVal('uiFactura'), resp_nombre: getVal('uiRespNombre'),
+        resp_doc: getVal('uiRespDoc'), resp_cargo: getVal('uiRespCargo'), items: items
+    };
+
+    const btnOriginalText = btnElement.innerText;
+    btnElement.innerText = "⏳ Generando documento...";
+    btnElement.disabled = true;
 
     try {
-        const response = await fetch(`http://127.0.0.1:8000/activos/${codigo}`);
-        if (!response.ok) throw new Error();
+        const response = await fetch('http://127.0.0.1:8000/api/actas/generar_pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-        const activo = await response.json();
+        if (!response.ok) throw new Error("Error en el servidor al generar el documento.");
 
-        // Llenado de todos los datos
-        document.getElementById('resNombre').innerText = activo.nombre;
-        document.getElementById('resCodActivo').innerText = activo.codigo_activo;
-        document.getElementById('resSerie').innerText = activo.serie || activo.placa;
-        document.getElementById('resUbiOri').innerText = activo.ubicacion_origen;
-        document.getElementById('resUbiDes').innerText = activo.ubicacion_destino;
-        document.getElementById('resRespOri').innerText = activo.responsable_origen;
-        document.getElementById('resRespDes').innerText = activo.responsable_destino;
-        document.getElementById('resCCOri').innerText = activo.centro_costos_origen;
-        document.getElementById('resCCDes').innerText = activo.centro_costos_destino;
-        document.getElementById('resPorcentaje').innerText = activo.porcentaje + '%';
-        document.getElementById('resSecuencia').innerText = activo.secuencia;
-        
-        const enlace = document.getElementById('resEnlace');
-        enlace.href = activo.enlace;
-        enlace.innerText = activo.enlace ? "Abrir Documento" : "No disponible";
-
-        document.getElementById('resultCard').style.display = 'block';
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Acta_Ingreso_${payload.resp_nombre.replace(/\s+/g, '_') || 'General'}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
     } catch (error) {
-        document.getElementById('errorTxt').style.display = 'block';
+        alert("Ocurrió un error: " + error.message);
+    } finally {
+        btnElement.innerText = btnOriginalText;
+        btnElement.disabled = false;
     }
 }
-
-}
-    

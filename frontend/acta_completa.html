@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAC — Centro de Control</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        /* =========================================================
+           1. ESTILOS UI (Glassmorphism)
+           ========================================================= */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+        body { background-color: #1d1d1f; background-image: url('https://www.transparenttextures.com/patterns/stardust.png'); color: #ffffff; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .container { max-width: 800px; width: 100%; margin-top: 20px; }
+        header { text-align: center; margin-bottom: 35px; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        header h1 { font-size: 42px; font-weight: 600; letter-spacing: -1px; margin-bottom: 6px; }
+        header p { color: rgba(255, 255, 255, 0.8); font-size: 16px; }
+        
+        /* TABS */
+        .tab-navigation { display: flex; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); padding: 4px; border-radius: 14px; margin-bottom: 30px; gap: 4px; overflow-x: auto;}
+        .tab-btn { flex: 1; border: none; background: transparent; padding: 10px; font-size: 14px; font-weight: 500; color: #ffffff; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; white-space: nowrap;}
+        .tab-btn.active { background: #ffffff; color: #1d1d1f; box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.12); font-weight: 600; }
+        .tab-content { display: none; }
+        .tab-content.active-content { display: block; animation: slideUp 0.35s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .section-title { font-size: 18px; font-weight: 600; margin-bottom: 22px; color: #ffffff; letter-spacing: -0.2px; }
+        .card { background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 20px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); margin-bottom: 20px; width: 100%;}
+        
+        /* FORMULARIOS */
+        .grid-formulario { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; text-align: left; }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group.full-width { grid-column: span 2; }
+        .form-group label { font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, 0.8); text-transform: uppercase; }
+        .search-input { width: 100%; padding: 12px 14px; font-size: 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.4); background-color: #ffffff; color: #1d1d1f; outline: none; }
+        .search-input:focus { border-color: #0071e3; box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.3); }
+        .form-section-divider { grid-column: 1 / -1; color: #66b3ff; font-weight: 600; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 6px; margin-top: 15px; margin-bottom: 5px;}
+        
+        /* CHECKBOXES UI */
+        .radio-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 5px; }
+        .radio-label { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+        .radio-label input[type="radio"] { width: 16px; height: 16px; accent-color: #0071e3; cursor: pointer;}
+        
+        /* BOTONES */
+        .btn-primary { width: 100%; padding: 14px; font-size: 15px; font-weight: 600; color: #fff; background-color: #0071e3; border: none; border-radius: 10px; cursor: pointer; transition: 0.2s ease; }
+        .btn-primary:hover { opacity: 0.9; }
+        
+        /* TABLA UI */
+        .table-container { width: 100%; overflow-x: auto; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); margin-top: 10px; }
+        .apple-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; background: rgba(0,0,0,0.2); }
+        .apple-table th { padding: 12px; color: #fff; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); }
+        .apple-table td { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .apple-table input { width: 100%; background: transparent; border: 1px solid transparent; color: white; padding: 6px; font-size: 13px; font-family: inherit; outline: none; border-radius: 4px; }
+        .apple-table input:focus { border-color: #66b3ff; background: rgba(255,255,255,0.1); }
+        .btn-del { background: rgba(255,59,48,0.2); color: #ff3b30; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+        /* ZEBRA SCANNER INPUT */
+        .zebra-input { border: 2px solid #34c759; box-shadow: 0 0 12px rgba(52, 199, 89, 0.4); background: #f0fff4; }
+
+        /* =========================================================
+           2. ESTILOS PLANTILLA PDF OCULTA (Estricto formato físico)
+           ========================================================= */
+        #plantillaPdfContenedor { position: absolute; left: -9999px; top: 0; z-index: -100; }
+        #plantillaPdfFormal { width: 210mm; min-height: 297mm; padding: 15mm; background: white; color: black; font-family: Arial, Helvetica, sans-serif; font-size: 11px; box-sizing: border-box;}
+        .t-pdf { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+        .t-pdf th, .t-pdf td { border: 1.5px solid black; padding: 4px 6px; vertical-align: middle; }
+        .bg-gray { background-color: #e6e6e6; font-weight: bold; }
+        .t-center { text-align: center; }
+        .box-check-pdf { display: inline-block; width: 12px; height: 12px; border: 1px solid black; margin-right: 4px; vertical-align: middle; text-align: center; line-height: 12px; font-weight: bold; font-size: 10px; color: black;}
+        .firma-box { width: 100%; height: 60px; border: 1px solid #ccc; margin-top: 10px; position: relative; }
+        .firma-box::after { content: "Firma"; position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: #666; }
+        
+        /* Utilidades */
+        .error-border { border-color: #ff3b30 !important; box-shadow: 0 0 0 2px rgba(255, 59, 48, 0.3) !important; }
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+        <header>
+            <h1>GAC</h1>
+            <p>Gestión de Activos Fijos</p>
+        </header>
+
+        <div class="tab-navigation">
+            <button class="tab-btn active" onclick="switchTab('modulo-acta')"> 📄 Acta de Entrada</button>
+            <button class="tab-btn" onclick="alert('Módulos ocultos para esta demo.')"> Consultar</button>
+            <button class="tab-btn" onclick="alert('Módulos ocultos para esta demo.')"> Traslados</button>
+            <button class="tab-btn" onclick="alert('Módulos ocultos para esta demo.')"> Inventario</button>
+        </div>
+
+        <div id="modulo-acta" class="tab-content active-content">
+            <div class="card max-width-card">
+                <h3 class="section-title">Formulario de Ingreso Oficial</h3>
+                
+                <form id="formActaUI">
+                    <div class="form-section-divider">1. Concepto de entrada</div>
+                    <div class="grid-formulario grid-4">
+                        <div class="form-group"><label>Día</label><input type="number" id="uiDia" class="search-input req" placeholder="DD" min="1" max="31"></div>
+                        <div class="form-group"><label>Mes</label><input type="number" id="uiMes" class="search-input req" placeholder="MM" min="1" max="12"></div>
+                        <div class="form-group"><label>Año</label><input type="number" id="uiAnio" class="search-input req" placeholder="AAAA" min="2020"></div>
+                        <div class="form-group"><label>Número</label><input type="text" id="uiNumero" class="search-input" placeholder="Opcional"></div>
+                    </div>
+                    <div class="radio-grid req-radio-group" id="groupConcepto">
+                        <label class="radio-label"><input type="radio" name="concepto" value="Donación"> Donación</label>
+                        <label class="radio-label"><input type="radio" name="concepto" value="Comodato"> Comodato</label>
+                        <label class="radio-label"><input type="radio" name="concepto" value="Préstamo Tercero"> Préstamo Tercero</label>
+                        <label class="radio-label"><input type="radio" name="concepto" value="Demostración"> Demostración</label>
+                        <label class="radio-label"><input type="radio" name="concepto" value="Compra" checked> Compra</label>
+                        <label class="radio-label"><input type="radio" name="concepto" value="Arrendamiento"> Arrendamiento</label>
+                        <label class="radio-label"><input type="radio" name="concepto" value="Leasing"> Leasing</label>
+                    </div>
+
+                    <div class="form-section-divider">2. Tipo de activo</div>
+                    <div class="radio-grid req-radio-group" id="groupTipo">
+                        <label class="radio-label"><input type="radio" name="tipo" value="Equipo Médico Científico"> Equipo Médico Científico</label>
+                        <label class="radio-label"><input type="radio" name="tipo" value="Equipo de computo y Comunicación"> Equipo de cómputo</label>
+                        <label class="radio-label"><input type="radio" name="tipo" value="Equipos De Oficina y varios" checked> Equipos de Oficina</label>
+                        <label class="radio-label"><input type="radio" name="tipo" value="Maquinaria Y Equipo"> Maquinaria</label>
+                        <label class="radio-label"><input type="radio" name="tipo" value="Instrumental"> Instrumental</label>
+                    </div>
+
+                    <div class="form-section-divider">3. Datos del activo</div>
+                    <div class="form-group full-width">
+                        <label style="color: #34c759;">⚡ Lector Zebra (Escanea el código para autocompletar fila)</label>
+                        <input type="text" id="zebraInput" class="search-input zebra-input" placeholder="Haz clic aquí y dispara el escáner..." autocomplete="off">
+                        <small style="color: gray;">Soporta lectura directa o strings separados por coma (Ej: PLACA,DESCRIPCION,MARCA,MODELO,SERIE)</small>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="apple-table" id="uiTablaActivos">
+                            <thead>
+                                <tr>
+                                    <th width="8%">CANT</th>
+                                    <th width="25%">Descripción</th>
+                                    <th width="15%">Placa</th>
+                                    <th width="15%">Marca</th>
+                                    <th width="15%">Modelo</th>
+                                    <th width="15%">Serie</th>
+                                    <th width="7%">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="uiTablaBody">
+                                </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn-primary" style="background: rgba(255,255,255,0.1); color: #66b3ff; margin-top: 10px;" onclick="agregarFilaUI()">+ Añadir fila manualmente</button>
+
+                    <div class="grid-formulario" style="margin-top: 15px;">
+                        <div class="form-group"><label>Proveedor</label><input type="text" id="uiProveedor" class="search-input req" placeholder="Nombre de la empresa"></div>
+                        <div class="form-group"><label>No. de FACTURA</label><input type="text" id="uiFactura" class="search-input req" placeholder="Ej. F-10293"></div>
+                    </div>
+
+                    <div class="form-section-divider">5. Responsable del activo (Recibe)</div>
+                    <div class="grid-formulario grid-3">
+                        <div class="form-group"><label>Nombre y Apellido</label><input type="text" id="uiRespNombre" class="search-input req" placeholder="Nombre completo"></div>
+                        <div class="form-group"><label>Documento Identidad</label><input type="text" id="uiRespDoc" class="search-input req" placeholder="No. Cédula"></div>
+                        <div class="form-group"><label>Cargo</label><input type="text" id="uiRespCargo" class="search-input req" placeholder="Ej. Jefe Enfermería"></div>
+                    </div>
+                </form>
+
+                <div class="form-section-divider" style="margin-top: 30px;">Generación de Documento</div>
+                <button type="button" class="btn-primary" style="background-color: #ff3b30;" onclick="exportarActaCompleta()">📄 Validar y Descargar PDF Oficial</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="plantillaPdfContenedor">
+        <div id="plantillaPdfFormal">
+            <table class="t-pdf">
+                <tr>
+                    <td rowspan="2" width="20%" class="t-center">
+                        <div style="width: 50px; height: 50px; border: 1px dashed #ccc; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 8px;">LOGO</div>
+                        <b style="font-size: 9px;">Clínica San Rafael</b>
+                    </td>
+                    <td rowspan="2" width="60%" class="t-center">
+                        <h2 style="margin:0; font-size: 16px;">ENTRADA DE ACTIVOS FIJOS</h2>
+                        <b style="font-size: 12px;">GESTIÓN DE APOYO</b>
+                    </td>
+                    <td width="20%" style="font-size: 10px; line-height: 1.4;">
+                        <b>Código:</b> GA-AF-AF-FR-01<br>
+                        <b>Versión:</b> 1 - 2022
+                    </td>
+                </tr>
+            </table>
+
+            <table class="t-pdf">
+                <tr>
+                    <td class="bg-gray" width="65%">1. Concepto de entrada</td>
+                    <td class="bg-gray t-center" width="10%">Fecha</td>
+                    <td class="t-center" width="5%" id="pdfDia"></td>
+                    <td class="t-center" width="5%" id="pdfMes"></td>
+                    <td class="t-center" width="15%" id="pdfAnio"></td>
+                </tr>
+                <tr>
+                    <td colspan="5" style="padding: 10px 5px;">
+                        <span id="pdfChkDonacion" class="box-check-pdf"></span> Donación &nbsp;&nbsp;
+                        <span id="pdfChkComodato" class="box-check-pdf"></span> Comodato &nbsp;&nbsp;
+                        <span id="pdfChkPrestamo" class="box-check-pdf"></span> Préstamo Tercero &nbsp;&nbsp;
+                        <span id="pdfChkDemostracion" class="box-check-pdf"></span> Demostración &nbsp;&nbsp;
+                        <span id="pdfChkCompra" class="box-check-pdf"></span> Compra &nbsp;&nbsp;
+                        <span id="pdfChkArrendamiento" class="box-check-pdf"></span> Arrendamiento &nbsp;&nbsp;
+                        <span id="pdfChkLeasing" class="box-check-pdf"></span> Leasing &nbsp;&nbsp;
+                        <span style="float: right; margin-right: 20px;"><b>Número:</b> <span id="pdfNumero" style="border-bottom: 1px solid black; display:inline-block; width: 60px; text-align: center;"></span></span>
+                    </td>
+                </tr>
+            </table>
+
+            <table class="t-pdf">
+                <tr><td class="bg-gray" colspan="2">2. Tipo de activo</td></tr>
+                <tr>
+                    <td width="50%" style="padding: 10px;">
+                        <span id="pdfChkMed" class="box-check-pdf"></span> Equipo Médico Científico<br><br>
+                        <span id="pdfChkOfi" class="box-check-pdf"></span> Equipos De Oficina y varios<br><br>
+                        <span id="pdfChkInst" class="box-check-pdf"></span> Instrumental
+                    </td>
+                    <td width="50%" style="padding: 10px; vertical-align: top;">
+                        <span id="pdfChkComp" class="box-check-pdf"></span> Equipo de computo y Comunicación<br><br>
+                        <span id="pdfChkMaq" class="box-check-pdf"></span> Maquinaria Y Equipo
+                    </td>
+                </tr>
+            </table>
+
+            <table class="t-pdf">
+                <tr><td class="bg-gray" colspan="6">3. Datos del activo</td></tr>
+                <tr class="bg-gray t-center">
+                    <td width="5%">CANT.</td>
+                    <td width="35%">Descripción</td>
+                    <td width="15%">Placa</td>
+                    <td width="15%">Marca</td>
+                    <td width="15%">Modelo</td>
+                    <td width="15%">Serie</td>
+                </tr>
+                <tbody id="pdfTablaItems">
+                    </tbody>
+                <tr>
+                    <td class="bg-gray">Proveedor</td>
+                    <td colspan="3" id="pdfProveedor"></td>
+                    <td class="bg-gray">No. de FACTURA</td>
+                    <td id="pdfFactura"></td>
+                </tr>
+            </table>
+
+            <table class="t-pdf">
+                <tr><td class="bg-gray" colspan="5">4. Asignación del activo</td></tr>
+                <tr>
+                    <td width="20%">Centro de gestión</td>
+                    <td width="40%" colspan="3" class="t-center">ACTIVOS FIJOS</td>
+                    <td width="40%" rowspan="2" class="t-center" style="vertical-align: middle;">
+                        <b>Vo.Bo. Jefe de Inventarios A.F.</b><br><br>
+                        <span style="font-family: 'Brush Script MT', 'Segoe Script', cursive; font-size: 26px; color: #111;">Alejandro Perez R.</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Bodega activos fijos</td>
+                    <td width="10%" class="t-center">1</td>
+                    <td width="10%" class="t-center bg-gray">Ubicación</td>
+                    <td width="20%" class="t-center">1111</td>
+                </tr>
+            </table>
+
+            <table class="t-pdf">
+                <tr><td class="bg-gray" colspan="2">5. Responsable del activo</td></tr>
+                <tr>
+                    <td width="60%" style="padding-top: 15px;">
+                        <b>Nombre y apellido:</b> <span id="pdfRespNombre" style="border-bottom: 1px solid black; display:inline-block; width: 65%;"></span><br><br>
+                        <b>Documento de Identidad No:</b> <span id="pdfRespDoc" style="border-bottom: 1px solid black; display:inline-block; width: 50%;"></span><br><br>
+                        <b>Cargo:</b> <span id="pdfRespCargo" style="border-bottom: 1px solid black; display:inline-block; width: 75%;"></span><br><br>
+                    </td>
+                    <td width="40%" style="padding: 10px;">
+                        <div class="firma-box"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="t-center" style="font-size: 9px; padding: 12px; color: #333; border-top: none;">
+                        <b>Los activos entregados son para uso exclusivo del servicio al cual se asigna, bajo responsabilidad del jefe del area, cualquier situación por favor comunicarla al área de activos fijos. Recuerde no se deben realizar movimientos de activos sin previa autorización.</b><br><br>
+                        <i>"Esta información es confidencial y para uso exclusivo de Clínica San Rafael de Popayán"</i>
+                    </td>
+                </tr>
+            </table>
+            
+            <div style="text-align: right; font-size: 9px; margin-top: 5px;">Página: 1 de 1</div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            // Como las otras vistas no están en este documento, solo controlamos las visuales.
+        }
+
+        // --- 1. SETEAR FECHA DE HOY POR DEFECTO ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const hoy = new Date();
+            document.getElementById('uiDia').value = String(hoy.getDate()).padStart(2, '0');
+            document.getElementById('uiMes').value = String(hoy.getMonth() + 1).padStart(2, '0');
+            document.getElementById('uiAnio').value = hoy.getFullYear();
+            
+            // Agregar una fila vacía para empezar
+            agregarFilaUI();
+        });
+
+        // --- 2. CONTROL DE LA TABLA UI ---
+        function agregarFilaUI(placa = '', desc = '', marca = '', modelo = '', serie = '', cant = '1') {
+            const tbody = document.getElementById('uiTablaBody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="number" class="t-cant" value="${cant}" min="1"></td>
+                <td><input type="text" class="t-desc" value="${desc}" placeholder="Descripción..."></td>
+                <td><input type="text" class="t-placa req-row" value="${placa}" placeholder="Código..." style="font-weight:bold; color:#66b3ff;"></td>
+                <td><input type="text" class="t-marca" value="${marca}" placeholder="Marca..."></td>
+                <td><input type="text" class="t-modelo" value="${modelo}" placeholder="Modelo..."></td>
+                <td><input type="text" class="t-serie" value="${serie}" placeholder="S/N..."></td>
+                <td style="text-align: center;"><button type="button" class="btn-del" onclick="this.closest('tr').remove()">X</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        // --- 3. LECTOR ZEBRA ---
+        const zebraInput = document.getElementById('zebraInput');
+        zebraInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === 'Tab') {
+                e.preventDefault();
+                const rawScan = zebraInput.value.trim();
+                if (!rawScan) return;
+
+                // Parsea el string. Si viene configurado por comas, espacios o tabs:
+                // Ej: 1532-CR,Monitor Vital,Philips,IntelliVue,SN9988
+                const parts = rawScan.split(/[,|\t]/);
+                
+                if(parts.length > 1) {
+                    // Si el escáner envió múltiples datos
+                    agregarFilaUI(parts[0]||'', parts[1]||'', parts[2]||'', parts[3]||'', parts[4]||'');
+                } else {
+                    // Si el escáner solo envió la placa
+                    agregarFilaUI(rawScan, '', '', '', '');
+                }
+                
+                // Limpiar input para la siguiente pistola
+                zebraInput.value = '';
+                // Pequeño feedback visual
+                zebraInput.style.backgroundColor = '#d4edda';
+                setTimeout(() => zebraInput.style.backgroundColor = '#f0fff4', 300);
+            }
+        });
+
+        // --- 4. VALIDACIÓN Y EXPORTACIÓN AL FORMATO CLÍNICO PDF ---
+        function exportarActaCompleta() {
+            // A. VALIDACIÓN BÁSICA
+            let esValido = true;
+            document.querySelectorAll('.req').forEach(input => {
+                if(!input.value.trim()) { input.classList.add('error-border'); esValido = false; }
+                else { input.classList.remove('error-border'); }
+            });
+
+            const filasUi = document.querySelectorAll('#uiTablaBody tr');
+            if(filasUi.length === 0) {
+                alert("Debes agregar al menos un activo en la tabla.");
+                return;
+            }
+
+            // Validar que las filas tengan placa
+            filasUi.forEach(tr => {
+                const inputPlaca = tr.querySelector('.t-placa');
+                if(!inputPlaca.value.trim()) { inputPlaca.classList.add('error-border'); esValido = false; }
+                else { inputPlaca.classList.remove('error-border'); }
+            });
+
+            if(!esValido) {
+                alert("Por favor, completa los campos marcados en rojo antes de generar el acta oficial.");
+                return;
+            }
+
+            // B. MAPEO DE DATOS UI -> PLANTILLA PDF
+            // Fechas y Textos
+            document.getElementById('pdfDia').innerText = document.getElementById('uiDia').value;
+            document.getElementById('pdfMes').innerText = document.getElementById('uiMes').value;
+            document.getElementById('pdfAnio').innerText = document.getElementById('uiAnio').value;
+            document.getElementById('pdfNumero').innerText = document.getElementById('uiNumero').value;
+            document.getElementById('pdfProveedor').innerText = document.getElementById('uiProveedor').value;
+            document.getElementById('pdfFactura').innerText = document.getElementById('uiFactura').value;
+            
+            // Responsable
+            document.getElementById('pdfRespNombre').innerText = document.getElementById('uiRespNombre').value;
+            document.getElementById('pdfRespDoc').innerText = document.getElementById('uiRespDoc').value;
+            document.getElementById('pdfRespCargo').innerText = document.getElementById('uiRespCargo').value;
+
+            // Checkboxes (limpiar todos y marcar los seleccionados)
+            document.querySelectorAll('.box-check-pdf').forEach(b => b.innerText = '');
+            
+            const conceptoSeleccionado = document.querySelector('input[name="concepto"]:checked').value;
+            const mapConcepto = {
+                'Donación': 'pdfChkDonacion', 'Comodato': 'pdfChkComodato', 'Préstamo Tercero': 'pdfChkPrestamo',
+                'Demostración': 'pdfChkDemostracion', 'Compra': 'pdfChkCompra', 'Arrendamiento': 'pdfChkArrendamiento', 'Leasing': 'pdfChkLeasing'
+            };
+            document.getElementById(mapConcepto[conceptoSeleccionado]).innerText = 'X';
+
+            const tipoSeleccionado = document.querySelector('input[name="tipo"]:checked').value;
+            const mapTipo = {
+                'Equipo Médico Científico': 'pdfChkMed', 'Equipos De Oficina y varios': 'pdfChkOfi',
+                'Instrumental': 'pdfChkInst', 'Equipo de computo y Comunicación': 'pdfChkComp', 'Maquinaria Y Equipo': 'pdfChkMaq'
+            };
+            document.getElementById(mapTipo[tipoSeleccionado]).innerText = 'X';
+
+            // Mapear Tabla de Activos
+            const tbodyPdf = document.getElementById('pdfTablaItems');
+            tbodyPdf.innerHTML = ''; // Limpiar filas anteriores
+            
+            filasUi.forEach(tr => {
+                const filaPdf = document.createElement('tr');
+                filaPdf.innerHTML = `
+                    <td class="t-center">${tr.querySelector('.t-cant').value || '1'}</td>
+                    <td>${tr.querySelector('.t-desc').value.toUpperCase()}</td>
+                    <td class="t-center"><b>${tr.querySelector('.t-placa').value.toUpperCase()}</b></td>
+                    <td class="t-center">${tr.querySelector('.t-marca').value.toUpperCase()}</td>
+                    <td class="t-center">${tr.querySelector('.t-modelo').value.toUpperCase()}</td>
+                    <td class="t-center">${tr.querySelector('.t-serie').value.toUpperCase()}</td>
+                `;
+                tbodyPdf.appendChild(filaPdf);
+            });
+
+            // Rellenar con filas en blanco si hay pocos ítems (Para mantener formato A4)
+            const MIN_FILAS = 6;
+            for(let i = filasUi.length; i < MIN_FILAS; i++) {
+                const filaVacia = document.createElement('tr');
+                filaVacia.innerHTML = `<td class="t-center">&nbsp;</td><td></td><td></td><td></td><td></td><td></td>`;
+                tbodyPdf.appendChild(filaVacia);
+            }
+
+            // C. RENDERIZADO DEL PDF
+            const elemento = document.getElementById('plantillaPdfFormal');
+            const contenedor = document.getElementById('plantillaPdfContenedor');
+            
+            // Traer a primer plano oculto para la foto
+            contenedor.style.left = '0';
+
+            const opciones = {
+                margin:       0,
+                filename:     `Acta_Entrada_${document.getElementById('uiRespNombre').value.replace(/\s+/g, '')}.pdf`,
+                image:        { type: 'jpeg', quality: 1.0 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Notificación UI
+            const btnOriginalText = event.target.innerText;
+            event.target.innerText = "⏳ Generando documento...";
+            
+            html2pdf().set(opciones).from(elemento).save().then(() => {
+                contenedor.style.left = '-9999px'; // Ocultar de nuevo
+                event.target.innerText = btnOriginalText;
+            });
+        }
+
+        // Remover error de validación al escribir
+        document.addEventListener('input', (e) => {
+            if(e.target.classList.contains('error-border') && e.target.value.trim() !== '') {
+                e.target.classList.remove('error-border');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -9,13 +9,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="icon" href="/imagenes act/logo.png" type="image/x-icon">
     <link rel="stylesheet" href="styles.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
+
 <body>
     
     <div class="container">
         <header>
             <h1>GAC</h1>
-            <p>Clínica San Rafael — Gestión de Activos Fijos</p>
+            <p>Gestión de Activos Fijos</p>
         </header>
 
         <div class="tab-navigation">
@@ -23,6 +26,7 @@
             <button class="tab-btn" onclick="switchTab('modulo-traslado')"> Traslados</button>
             <button class="tab-btn" onclick="switchTab('modulo-Inventario')"> Inventario</button>
             <button class="tab-btn" onclick="switchTab('modulo-registro')"> Registrar (Admin)</button>
+            <button class="tab-btn" onclick="switchTab('modulo-acta')"> Acta Entrada</button>
         </div>
 
         <div id="modulo-consulta" class="tab-content active-content">
@@ -37,64 +41,47 @@
             </div>
 
             <div class="result-card max-width-card" id="resultCard">
-    <div class="result-header">
-        <h2 id="resNombre">Nombre del Activo</h2>
-        <div class="status-badge" id="resEstado">Operativo</div>
-    </div>
-    <div class="grid-info">
-        <div class="info-item"><span class="label">Código Activo</span><span class="value" id="resCodActivo">—</span></div>
-        <div class="info-item"><span class="label">Placa/Serie</span><span class="value" id="resSerie">—</span></div>
-        <div class="info-item"><span class="label">Ubicación Origen</span><span class="value" id="resUbiOri">—</span></div>
-        <div class="info-item"><span class="label">Ubicación Destino</span><span class="value" id="resUbiDes">—</span></div>
-        <div class="info-item"><span class="label">Resp. Origen</span><span class="value" id="resRespOri">—</span></div>
-        <div class="info-item"><span class="label">Resp. Destino</span><span class="value" id="resRespDes">—</span></div>
-        <div class="info-item"><span class="label">C. Costos Ori</span><span class="value" id="resCCOri">—</span></div>
-        <div class="info-item"><span class="label">C. Costos Des</span><span class="value" id="resCCDes">—</span></div>
-        <div class="info-item"><span class="label">Porcentaje</span><span class="value" id="resPorcentaje">—</span></div>
-        <div class="info-item"><span class="label">Secuencia</span><span class="value" id="resSecuencia">—</span></div>
-    </div>
-    <div class="info-item" style="margin-top: 15px;">
-        <span class="label">Enlace Hoja de Vida</span>
-        <a href="#" id="resEnlace" target="_blank" style="color: #0071e3; font-weight: 500;">Ver enlace</a>
-    </div>
-</div>
-        </div>
-            <div id="modulo-Inventario" class="tab-content">
-            <div class="card max-width-card">
-                <h3 class="section-title">inventario de area</h3>
-                <div class="input-group">
-                    <label for="codigoInput">Ubicacion(cuidado intensivo)</label>
-                    <input type="text" id="codigoInput2" class="search-input" placeholder="Ej. 1111-activos Fijos" autofocus autocomplete="off">
+                <div class="result-header">
+                    <h2 id="resNombre">Nombre del Activo</h2>
+                    <div class="status-badge" id="resEstado">Operativo</div>
                 </div>
-                <button class="btn-primary" id="btnInventario">Consultar Inventario</button>
-                <div class="error-message" id="movErrorinv">No se encontró ningún activo con esa placa.</div>
+                <div class="grid-info">
+                    <div class="info-item"><span class="label">Código Activo</span><span class="value" id="resCodActivo">—</span></div>
+                    <div class="info-item"><span class="label">Placa/Serie</span><span class="value" id="resSerie">—</span></div>
+                    <div class="info-item"><span class="label">Ubicación Origen</span><span class="value" id="resUbiOri">—</span></div>
+                    <div class="info-item"><span class="label">Ubicación Destino</span><span class="value" id="resUbiDes">—</span></div>
+                    <div class="info-item"><span class="label">Resp. Origen</span><span class="value" id="resRespOri">—</span></div>
+                    <div class="info-item"><span class="label">Resp. Destino</span><span class="value" id="resRespDes">—</span></div>
+                    <div class="info-item"><span class="label">C. Costos Ori</span><span class="value" id="resCCOri">—</span></div>
+                    <div class="info-item"><span class="label">C. Costos Des</span><span class="value" id="resCCDes">—</span></div>
+                    <div class="info-item"><span class="label">Porcentaje</span><span class="value" id="resPorcentaje">—</span></div>
+                    <div class="info-item"><span class="label">Secuencia</span><span class="value" id="resSecuencia">—</span></div>
+                </div>
+                <div class="info-item" style="margin-top: 15px;">
+                    <span class="label">Enlace Hoja de Vida</span>
+                    <a href="#" id="resEnlace" target="_blank" style="color: #0071e3; font-weight: 500;">Ver enlace</a>
+                </div>
             </div>
+        </div>
 
-            <div class="result-card max-width-card" id="movResult">
-    <div class="result-header">
-        <h2 id="resNombre">CUIDADO INTENSIVO ADULTOS</h2>
-        <div class="status-badge" id="resEstado">Operativo</div>
-    </div>
-    <div class="grid-info">
-        <div class="info-item"><span class="label">Código Activo</span><span class="value" id="resCodActivo">—</span></div>
-        <div class="info-item"><span class="label">Placa</span><span class="value" id="resSerie">—</span></div>
-        <div class="info-item"><span class="label">Ubicación</span><span class="value" id="resUbiOri">—</span></div>
-        <div class="info-item"><span class="label">Descripcion</span><span class="value" id="resUbiDes">—</span></div>
-        <div class="info-item"><span class="label">Responsable</span><span class="value" id="resRespOri">—</span></div>
-        <div class="info-item"><span class="label">serie</span><span class="value" id="resRespDes">—</span></div>
-        <div class="info-item"><span class="label">Centro de costos</span><span class="value" id="resCCOri">—</span></div>
-        <div class="info-item"><span class="label">modelo </span><span class="value" id="resCCDes">—</span></div>
-        <div class="info-item"><span class="label">precio</span><span class="value" id="resPorcentaje">—</span></div>
-        <div class="info-item"><span class="label">observacion</span><span class="value" id="resSecuencia">—</span></div>
-    </div>
-    <div class="info-item" style="margin-top: 15px;">
-        <span class="label">Enlace Hoja de Vida</span>
-        <a href="#" id="resEnlace" target="_blank" style="color: #0071e3; font-weight: 500;">Ver enlace</a>
+        <div id="modulo-Inventario" class="tab-content">
+    <div class="card max-width-card">
+        <h3 class="section-title">Inventario General de la Clínica</h3>
+        
+        <!-- Barra de búsqueda rápida -->
+        <div class="input-group">
+            <label>Búsqueda inteligente</label>
+            <input type="text" id="busquedaInventario" class="search-input" placeholder="Ej: Cama, Piso 7, 10001, etc..." autocomplete="off">
+        </div>
+
+        <!-- Contenedor de la tabla con scroll horizontal -->
+        <div class="contenedor-tabla" style="overflow-x: auto; margin-top: 20px; border: 1px solid #e1e1e1; border-radius: 8px;">
+            <table id="tabla-inventario" class="apple-table" style="width: 100%; min-width: 1200px; border-collapse: collapse; background: white;">
+                <!-- Aquí se cargarán automáticamente las 24 columnas -->
+            </table>
+        </div>
     </div>
 </div>
-        </div>  
-        
-
         <div id="modulo-traslado" class="tab-content">
             <div class="card max-width-card">
                 <h3 class="section-title">Registrar Traslado / Movimiento</h3>
@@ -138,7 +125,7 @@
                 </div>
             </div>
         </div>
-
+            
         <div id="modulo-registro" class="tab-content">
             <div class="card max-width-card">
                 <h3 class="section-title">Registrar Nuevo Activo (Acceso Administrador)</h3>
@@ -221,16 +208,97 @@
                 <p class="section-description">Sube el archivo plano (.csv) de la clínica para cargar o actualizar los activos automáticamente.</p>
                 <div class="input-group">
                     <label for="csvFile">Seleccionar Archivo Plano (.CSV)</label>
-                    <input type="file" id="csvFile" accept=".csv" class="search-input file-input">
+                    <div class="file-upload-container">
+                        <input type="file" id="csvFile" accept=".csv">
+                        <label for="csvFile" class="file-upload-btn">
+                            📄 Elegir archivo
+                        </label>
+                        <span id="fileName" class="file-name">
+                            Ningún archivo seleccionado
+                        </span>
+                    </div>
                 </div>
                 <button id="btnImportarCsv" class="btn-primary btn-gradient-success">Procesar y Sincronizar Archivo</button>
                 <div class="success-toast spaced-toast" id="csvSuccessTxt"></div>
                 <div class="error-message spaced-toast" id="csvErrorTxt"></div>
             </div>
         </div>
-    </div>
 
-    <div id="adminModal" class="modal-overlay">
+        <div id="modulo-acta" class="tab-content">
+            <div class="card max-width-card">
+                <h3 class="section-title">Formulario de Ingreso Oficial</h3>
+                
+                <form id="formActaUI">
+                    <div class="form-section-divider">1. Concepto de entrada</div>
+                    <div class="grid-formulario" style="grid-template-columns: repeat(4, 1fr);">
+                        <div class="form-group"><label>Día</label><input type="number" id="uiDia" class="search-input req" placeholder="DD" min="1" max="31"></div>
+                        <div class="form-group"><label>Mes</label><input type="number" id="uiMes" class="search-input req" placeholder="MM" min="1" max="12"></div>
+                        <div class="form-group"><label>Año</label><input type="number" id="uiAnio" class="search-input req" placeholder="AAAA" min="2020"></div>
+                        <div class="form-group"><label>Número</label><input type="text" id="uiNumero" class="search-input" placeholder="Opcional"></div>
+                    </div>
+                    <div class="radio-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;">
+                        <label class="radio-label"><input type="radio" name="concepto" value="Donación"> Donación</label>
+                        <label class="radio-label"><input type="radio" name="concepto" value="Comodato"> Comodato</label>
+                        <label class="radio-label"><input type="radio" name="concepto" value="Préstamo Tercero"> Préstamo</label>
+                        <label class="radio-label"><input type="radio" name="concepto" value="Demostración"> Demostración</label>
+                        <label class="radio-label"><input type="radio" name="concepto" value="Compra" checked> Compra</label>
+                        <label class="radio-label"><input type="radio" name="concepto" value="Arrendamiento"> Arrendamiento</label>
+                        <label class="radio-label"><input type="radio" name="concepto" value="Leasing"> Leasing</label>
+                    </div>
+
+                    <div class="form-section-divider">2. Tipo de activo</div>
+                    <div class="radio-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+                        <label class="radio-label"><input type="radio" name="tipo" value="Equipo Médico Científico"> Equipo Médico Científico</label>
+                        <label class="radio-label"><input type="radio" name="tipo" value="Equipo de computo y Comunicación"> Equipo de cómputo</label>
+                        <label class="radio-label"><input type="radio" name="tipo" value="Equipos De Oficina y varios" checked> Equipos de Oficina</label>
+                        <label class="radio-label"><input type="radio" name="tipo" value="Maquinaria Y Equipo"> Maquinaria</label>
+                        <label class="radio-label"><input type="radio" name="tipo" value="Instrumental"> Instrumental</label>
+                    </div>
+
+                    <div class="form-section-divider">3. Datos del activo</div>
+                    <div class="form-group full-width" style="margin-bottom: 15px;">
+                        <label style="color: #34c759;">⚡ Lector Zebra (Escanea para autocompletar fila)</label>
+                        <input type="text" id="zebraInput" class="search-input zebra-input" placeholder="Haz clic aquí y dispara el escáner..." autocomplete="off">
+                    </div>
+
+                    <div class="table-container">
+                        <table class="apple-table" id="uiTablaActivos">
+                            <thead>
+                                <tr>
+                                    <th width="8%">CANT</th>
+                                    <th width="25%">Descripción</th>
+                                    <th width="15%">Placa</th>
+                                    <th width="15%">Marca</th>
+                                    <th width="15%">Modelo</th>
+                                    <th width="15%">Serie</th>
+                                    <th width="7%">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="uiTablaBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn-primary" style="background: rgba(255,255,255,0.1); color: #66b3ff; margin-top: 10px;" onclick="agregarFilaUI()">+ Añadir fila manualmente</button>
+
+                    <div class="grid-formulario" style="margin-top: 15px;">
+                        <div class="form-group"><label>Proveedor</label><input type="text" id="uiProveedor" class="search-input req" placeholder="Nombre de la empresa"></div>
+                        <div class="form-group"><label>No. de FACTURA</label><input type="text" id="uiFactura" class="search-input req" placeholder="Ej. F-10293"></div>
+                    </div>
+
+                    <div class="form-section-divider">5. Responsable del activo (Recibe)</div>
+                    <div class="grid-formulario" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="form-group"><label>Nombre</label><input type="text" id="uiRespNombre" class="search-input req" placeholder="Nombre completo"></div>
+                        <div class="form-group"><label>Documento</label><input type="text" id="uiRespDoc" class="search-input req" placeholder="No. Cédula"></div>
+                        <div class="form-group"><label>Cargo</label><input type="text" id="uiRespCargo" class="search-input req" placeholder="Ej. Jefe Enfermería"></div>
+                    </div>
+                </form>
+
+                <div class="form-section-divider" style="margin-top: 30px;">Generación de Documento</div>
+                <button type="button" class="btn-primary" style="background-color: #ff3b30;" onclick="exportarActaCompleta(this)">📄 Validar y Descargar PDF Oficial</button>
+            </div>
+        </div>
+        
+    </div> <div id="adminModal" class="modal-overlay">
         <div class="modal-card">
             <h3 class="section-title modal-title">Acceso Restringido</h3>
             <p class="modal-subtitle">Ingrese el PIN de administrador de Activos Fijos para desbloquear este módulo.</p>
@@ -244,6 +312,8 @@
             </div>
         </div>
     </div>
+
+    
 
     <script src="app.js"></script>
 </body>
